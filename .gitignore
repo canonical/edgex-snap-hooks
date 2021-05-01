@@ -1,0 +1,6 @@
+*~
+*.log
+.idea
+go.sum
+coverage.out
+VERSION
