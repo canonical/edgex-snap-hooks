@@ -451,6 +451,24 @@ func checkForServiceSpecificKey(k, service string) (bool, string) {
 	return true, noPrefixEnv
 }
 
+func getConfigEnvVar(k string, extraConf map[string]string) (string, bool) {
+	var env string
+
+	env, ok := ConfToEnv[k]
+	if ok {
+		return env, true
+	}
+
+	if extraConf != nil {
+		env, ok = extraConf[k]
+		if ok {
+			return env, true
+		}
+	}
+
+	return env, false
+}
+
 // HandleEdgeXConfig processes snap configuration which can be used to override
 // edgexfoundry configuration via environment variables sourced by the snap
 // service wrapper script. The parameter service is used to create a new service
@@ -534,21 +552,15 @@ func HandleEdgeXConfig(service, envJSON string, extraConf map[string]string) err
 			}
 		}
 
-		env, ok := ConfToEnv[k]
-		if !ok && extraConf!= nil {
-			env, ok = extraConf[k]
-			if !ok {
-				return errors.New("invalid EdgeX config option - " + k)
-			}
+		env, ok := getConfigEnvVar(k, extraConf)
+		if !ok {
+			return errors.New("invalid EdgeX config option - " + k)
 		}
 
-		// checkForServiceKey takes the environment variable associated
-		// with theflattened config key (e.g. 'smtp.host') and
-		// grabs the associated key and value from ConfToEnv, then calls
-		// checkForServiceSpecificKey() to see if value has a
-		// service prefix, and if it does, ensures that it matches the
+		// checkForServiceSpecificKey() checks the env var for a service
+		// prefix, and if it finds one, ensures that it matches the
 		// current service being handled. If the match fails, then the
-		// key is ignored (TODO: should this be an error).
+		// key is ignored
 		ok, envNoPrefix := checkForServiceSpecificKey(env, service)
 		if !ok {
 			// TODO: should this be an error or warn OK?

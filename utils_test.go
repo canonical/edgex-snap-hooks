@@ -25,7 +25,9 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestMergeMaps(t *testing.T) {
+// TODO: add more tests (see trello: )
+
+func TestEnvVars(t *testing.T) {
 	// Arrange
 	os.Setenv(snapEnv, "/snap/testsnap/x1")
 	os.Setenv(snapCommonEnv, "/snap/testsnap/common")
@@ -45,4 +47,39 @@ func TestMergeMaps(t *testing.T) {
 	assert.Equal(t, SnapRev, "2112")
 	assert.Equal(t, SnapConf, "/snap/testsnap/x1/config")
 	assert.Equal(t, SnapDataConf, "/var/snap/testsnap/x1/config")
+}
+
+func TestGetConfigEnvVar(t *testing.T) {
+	var env string
+	var ok bool
+
+	// TODO: make this a data driven test (ie. reduce dup code)
+	// Test
+	env, ok = getConfigEnvVar("service.port", nil)
+	assert.True(t, ok)
+	assert.Equal(t, env, "SERVICE_PORT")
+
+	// test invalid key
+	env, ok = getConfigEnvVar("service.foo", nil)
+	assert.False(t, ok)
+
+	// test extra key
+	var extraConf = map[string]string{
+		"service.mykey":     "SERVICE_MYKEY",
+		"service.mykey-2":   "SERVICE_MYKEY2",
+	}
+
+	// extra key exists
+	env, ok = getConfigEnvVar("service.mykey", extraConf)
+	assert.True(t, ok)
+	assert.Equal(t, env, "SERVICE_MYKEY")
+
+	// extra key exists w/hyphen
+	env, ok = getConfigEnvVar("service.mykey-2", extraConf)
+	assert.True(t, ok)
+	assert.Equal(t, env, "SERVICE_MYKEY2")
+
+	// extra key doesn't exist
+	env, ok = getConfigEnvVar("service.fubar", extraConf)
+	assert.False(t, ok)
 }
