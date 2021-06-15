@@ -431,9 +431,10 @@ func securityProxySetTLSCertificate(tlsCertificate, tlsPrivateKey, tlsSNI string
 }
 
 // This func checks the given key for a service-specific prefix
-// delimited by a '/'. If found, the prefix is compared against
+// delimited by a '/'. The prefix can either be a service name or a
+// CSV service list. If found, the prefix is compared against
 // the specified service parameter. If the prefix doesn't match
-// the given service name, then false is returned. The string
+// one of the given service names, then false is returned. The string
 // retval is the incoming k parameter stripped of any prefix.
 func checkForServiceSpecificKey(k, service string) (bool, string) {
 	var noPrefixEnv = k
@@ -441,11 +442,13 @@ func checkForServiceSpecificKey(k, service string) (bool, string) {
 	subStrs := strings.Split(k, "/")
 	if len(subStrs) == 2 {
 		noPrefixEnv = subStrs[1]
-		if subStrs[0] != service {
-			return false, noPrefixEnv
+		servicesPrefix := strings.Split(subStrs[0], ",")
+		for _, servicePrefix := range servicesPrefix {
+			if servicePrefix == service {
+				return true, noPrefixEnv
+			}
 		}
-
-		return true, noPrefixEnv
+		return false, noPrefixEnv
 	}
 
 	return true, noPrefixEnv
