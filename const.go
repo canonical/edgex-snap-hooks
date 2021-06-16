@@ -100,26 +100,20 @@ var ConfToEnv = map[string]string{
 	// [Registry] -- not yet supported, would also require consul changes
 
 	// [Clients]
+	// [Clients.core-command]
+	"clients.core-command.port": "CLIENTS_CORECOMMAND_PORT",
 
-	// [Clients.Command]
-	"clients.command.port": "CLIENTS_COMMAND_PORT",
+	// [Clients.core-data]
+	"clients.core-data.port": "CLIENTS_COREDATA_PORT",
 
-	// [Clients.CoreData]
-	"clients.coredata.port": "CLIENTS_COREDATA_PORT",
+	// [Clients.core-metadata]
+	"clients.core-metadata.port": "CLIENTS_COREMETADATA_PORT",
 
-	// [Clients.Data]
-	// There are two client keys for CoreData because device-sdk-go uses
-	// this key, and all the core services uses the previous key.
-	"clients.data.port": "CLIENTS_DATA_PORT",
+	// [Clients.support-notifications]
+	"clients.support-notifications.port": "CLIENTS_SUPPORTNOTIFICATIONS_PORT",
 
-	// [Clients.Metadata]
-	"clients.metadata.port": "CLIENTS_METADATA_PORT",
-
-	// [Clients.Notifications]
-	"clients.notifications.port": "CLIENTS_NOTIFICATIONS_PORT",
-
-	// [Clients.Scheduler]
-	"clients.scheduler.port": "CLIENTS_SCHEDULER_PORT",
+	// [Clients.support-scheduler]
+	"clients.support-scheduler.port": "CLIENTS_SUPPORTSCHEDULER_PORT",
 
 	// [Database] -- application services only; not supported
 	// [Databases] -- not supported
@@ -151,16 +145,17 @@ var ConfToEnv = map[string]string{
 
 	// [MessageQueue.Optional] - not yet supported
 
-	// [SecretStore]
-	"secretstore.additional-retry-attempts": "SECRETSTORE_ADDITIONALRETRYATTEMPTS",
-	"secretstore.retry-wait-period":         "SECRETSTORE_RETRYWAITPERIOD",
+	// [Trigger]
+	// [Trigger.EdgexMessageBus]
+	// [Trigger.EdgexMessageBus.SubscribeHost]
+	"trigger.edgex-message-bus.subscribe-host.port": "app-service-config/TRIGGER_EDGEXMESSAGEBUS_SUBSCRIBEHOST_PORT",
+	"trigger.edgex-message-bus.subscribe-host.protocol": "app-service-config/TRIGGER_EDGEXMESSAGEBUS_SUBSCRIBEHOST_PROTOCOL",
+	"trigger.edgex-message-bus.subscribe-host.subscribe-topics": "app-service-config/TRIGGER_EDGEXMESSAGEBUS_SUBSCRIBEHOST_SUBSCRIBETOPICS",
 
-	// [SecretStore.Authentication] -- not supported
-	// [SecretStoreExclusive] -- application service only; not supported
-
-	// TODO: Once app-service-configurable support has been updated to v2, add
-	//       the [Trigger] value hierarcy here to the map. This replaces the
-	//       previous [Binding] and [MesageBus] settings for app-service-configurable
+	// [Trigger.EdgexMessageBus.PublishHost]
+	"trigger.edgex-message-bus.publish-host.port": "app-service-config/TRIGGER_EDGEXMESSAGEBUS_PUBLISHHOST_PORT",
+	"trigger.edgex-message-bus.publish-host.protocol": "app-service-config/TRIGGER_EDGEXMESSAGEBUS_PUBLISHHOST_PROTOCOL",
+	"trigger.edgex-message-bus.publish-host.publish-topic": "app-service-config/TRIGGER_EDGEXMESSAGEBUS_PUBLISHHOST_PUBLISHTOPIC",
 
 	// [Smtp]
 	"smtp.host":                    "support-notifications/SMTP_HOST",
@@ -170,10 +165,9 @@ var ConfToEnv = map[string]string{
 	"smtp.sender":                  "support-notifications/SMTP_SENDER",
 	"smtp.enable-self-signed-cert": "support-notifications/SMTP_ENABLE_SELF_SIGNED_CERT",
 	"smtp.subject":                 "support-notifications/SMTP_SUBJECT",
-	// SecretPath is used to specify the secret path to store the credential(username and password) for connecting the SMTP server
-	// User need to store the credential via the /secret API before sending the email notification
-	"smtp.secret-path": "support-notifications/SMTP_SECRETPATH",
-	// AuthMode is the SMTP authentication mechanism. Currently, 'usernamepassword' is the only AuthMode supported by this service, and the secret keys are 'username' and 'password'.
+
+	// AuthMode is the SMTP authentication mechanism. Currently, 'usernamepassword' is the only
+	// AuthMode supported by this service, and the secret keys are 'username' and 'password'.
 	"smtp.auth-mode": "support-notifications/SMTP_AUTHMODE",
 
 	// ADD_PROXY_ROUTE is a csv list of URLs to be added to the
