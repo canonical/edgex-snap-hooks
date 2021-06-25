@@ -53,6 +53,9 @@ const (
 	// ServiceSysMgmt is the service key for EdgeX SMA (sys-mgmt-agent).
 	ServiceSysMgmt = "sys-mgmt-agent"
 	// ServiceKuiper is the service key for the Kuiper rules engine.
+	// ServiceSecBootstrapper
+	ServiceSecBootstrapper = "security-bootstrapper"
+
 	ServiceKuiper   = "kuiper"
 	snapEnv         = "SNAP"
 	snapCommonEnv   = "SNAP_COMMON"
@@ -148,13 +151,13 @@ var ConfToEnv = map[string]string{
 	// [Trigger]
 	// [Trigger.EdgexMessageBus]
 	// [Trigger.EdgexMessageBus.SubscribeHost]
-	"trigger.edgex-message-bus.subscribe-host.port": "app-service-config/TRIGGER_EDGEXMESSAGEBUS_SUBSCRIBEHOST_PORT",
-	"trigger.edgex-message-bus.subscribe-host.protocol": "app-service-config/TRIGGER_EDGEXMESSAGEBUS_SUBSCRIBEHOST_PROTOCOL",
+	"trigger.edgex-message-bus.subscribe-host.port":             "app-service-config/TRIGGER_EDGEXMESSAGEBUS_SUBSCRIBEHOST_PORT",
+	"trigger.edgex-message-bus.subscribe-host.protocol":         "app-service-config/TRIGGER_EDGEXMESSAGEBUS_SUBSCRIBEHOST_PROTOCOL",
 	"trigger.edgex-message-bus.subscribe-host.subscribe-topics": "app-service-config/TRIGGER_EDGEXMESSAGEBUS_SUBSCRIBEHOST_SUBSCRIBETOPICS",
 
 	// [Trigger.EdgexMessageBus.PublishHost]
-	"trigger.edgex-message-bus.publish-host.port": "app-service-config/TRIGGER_EDGEXMESSAGEBUS_PUBLISHHOST_PORT",
-	"trigger.edgex-message-bus.publish-host.protocol": "app-service-config/TRIGGER_EDGEXMESSAGEBUS_PUBLISHHOST_PROTOCOL",
+	"trigger.edgex-message-bus.publish-host.port":          "app-service-config/TRIGGER_EDGEXMESSAGEBUS_PUBLISHHOST_PORT",
+	"trigger.edgex-message-bus.publish-host.protocol":      "app-service-config/TRIGGER_EDGEXMESSAGEBUS_PUBLISHHOST_PROTOCOL",
 	"trigger.edgex-message-bus.publish-host.publish-topic": "app-service-config/TRIGGER_EDGEXMESSAGEBUS_PUBLISHHOST_PUBLISHTOPIC",
 
 	// [Smtp]
@@ -195,6 +198,9 @@ var ConfToEnv = map[string]string{
 	// TODO: validation
 	//
 	"add-secretstore-tokens": "security-secret-store/ADD_SECRETSTORE_TOKENS",
+
+	"add-known-secrets":      "ADD_KNOWN_SECRETS",
+	"add-registry-acl-roles": "ADD_REGISTRY_ACL_ROLES",
 }
 
 // Services is a string array of all of the edgexfoundry snap services.
@@ -220,4 +226,5 @@ var Services = []string{
 	ServiceSysMgmt,
 	// rules-engine
 	ServiceKuiper,
+	ServiceSecBootstrapper,
 }
