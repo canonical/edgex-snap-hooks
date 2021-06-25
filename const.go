@@ -53,10 +53,11 @@ const (
 	// ServiceSysMgmt is the service key for EdgeX SMA (sys-mgmt-agent).
 	ServiceSysMgmt = "sys-mgmt-agent"
 	// ServiceKuiper is the service key for the Kuiper rules engine.
-	// ServiceSecBootstrapper
-	ServiceSecBootstrapper = "security-bootstrapper"
-
 	ServiceKuiper   = "kuiper"
+	// ServiceSecBootstrapper is the service key for the security-bootstrapper,
+	// a one-shot service that bootstraps per-service Consul ACLS required to
+	// access Consul for configuration or registry services.
+	ServiceSecBootstrapper = "security-bootstrapper"
 	snapEnv         = "SNAP"
 	snapCommonEnv   = "SNAP_COMMON"
 	snapDataEnv     = "SNAP_DATA"
@@ -188,19 +189,26 @@ var ConfToEnv = map[string]string{
 	// [KongAuth]
 	"kongauth.name": "security-proxy/KONGAUTH_NAME",
 
+	// NOTE - these settings are not configuration overrides, they are environment
+	// variables ready by security-secretstore-setup and security-bootstrapper on
+	// startup
+	//
+	// TODO: validation
+	//
 	// ADD_SECRETSTORE_TOKENS is a csv list of service keys to be added to the
 	// list of Vault tokens that security-file-token-provider (launched by
 	// security-secretstore-setup) creates.
 	//
-	// NOTE - this setting is not a configuration override, it's a top-level
-	// environment variable used by the security-secretstore-setup.
-	//
-	// TODO: validation
-	//
 	"add-secretstore-tokens": "security-secret-store/ADD_SECRETSTORE_TOKENS",
 
-	"add-known-secrets":      "ADD_KNOWN_SECRETS",
-	"add-registry-acl-roles": "ADD_REGISTRY_ACL_ROLES",
+	// ADD_KNOWN_SECRETS is a csv list of service keys and list of known secrets
+	// to be copied into the Vault namespace for the service. The primary use for
+	// this variable is ensuring that the redis password is accessible.
+	"add-known-secrets":      "security-secret-store/ADD_KNOWN_SECRETS",
+
+	// ADD_REGISTRY_ACL_ROLES is a csv list of service keys used to create
+	// ACL roles in Vault to allow secure Consul access for the services.
+	"add-registry-acl-roles": "security-boostrapper/ADD_REGISTRY_ACL_ROLES",
 }
 
 // Services is a string array of all of the edgexfoundry snap services.
