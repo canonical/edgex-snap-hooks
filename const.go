@@ -53,17 +53,17 @@ const (
 	// ServiceSysMgmt is the service key for EdgeX SMA (sys-mgmt-agent).
 	ServiceSysMgmt = "sys-mgmt-agent"
 	// ServiceKuiper is the service key for the Kuiper rules engine.
-	ServiceKuiper   = "kuiper"
+	ServiceKuiper = "kuiper"
 	// ServiceSecBootstrapper is the service key for the security-bootstrapper,
 	// a one-shot service that bootstraps per-service Consul ACLS required to
 	// access Consul for configuration or registry services.
 	ServiceSecBootstrapper = "security-bootstrapper"
-	snapEnv         = "SNAP"
-	snapCommonEnv   = "SNAP_COMMON"
-	snapDataEnv     = "SNAP_DATA"
-	snapInstNameEnv = "SNAP_INSTANCE_NAME"
-	snapNameEnv     = "SNAP_NAME"
-	snapRevEnv      = "SNAP_REVISION"
+	snapEnv                = "SNAP"
+	snapCommonEnv          = "SNAP_COMMON"
+	snapDataEnv            = "SNAP_DATA"
+	snapInstNameEnv        = "SNAP_INSTANCE_NAME"
+	snapNameEnv            = "SNAP_NAME"
+	snapRevEnv             = "SNAP_REVISION"
 )
 
 // ConfToEnv defines mappings from snap config keys to EdgeX environment variable
@@ -204,11 +204,11 @@ var ConfToEnv = map[string]string{
 	// ADD_KNOWN_SECRETS is a csv list of service keys and list of known secrets
 	// to be copied into the Vault namespace for the service. The primary use for
 	// this variable is ensuring that the redis password is accessible.
-	"add-known-secrets":      "security-secret-store/ADD_KNOWN_SECRETS",
+	"add-known-secrets": "security-secret-store/ADD_KNOWN_SECRETS",
 
 	// ADD_REGISTRY_ACL_ROLES is a csv list of service keys used to create
 	// ACL roles in Vault to allow secure Consul access for the services.
-	"add-registry-acl-roles": "security-boostrapper/ADD_REGISTRY_ACL_ROLES",
+	"add-registry-acl-roles": "security-bootstrapper/ADD_REGISTRY_ACL_ROLES",
 }
 
 // Services is a string array of all of the edgexfoundry snap services.
