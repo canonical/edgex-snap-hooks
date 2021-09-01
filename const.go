@@ -206,6 +206,14 @@ var ConfToEnv = map[string]string{
 	// this variable is ensuring that the redis password is accessible.
 	"add-known-secrets": "security-secret-store/ADD_KNOWN_SECRETS",
 
+	// The default-token-ttl setting is a Go Duration string, a sequence of decimal
+	// numbers, each with optional fraction and a unit suffix (e.g. "ns", "us" (or
+	// "µs"), "ms", "s", "m", "h"). It's used to set the TTL of vault tokens generated
+	// for EdgeX services during bootstrap. This setting can be used to increase
+	// (or decrease) the default TTL (one hour). If the TTL of a token expires before
+	// a service is started, the service will not be able to access the Secret Store.
+	"default-token-ttl": "security-secret-store/TOKENFILEPROVIDER_DEFAULTTOKENTTL",
+
 	// ADD_REGISTRY_ACL_ROLES is a csv list of service keys used to create
 	// ACL roles in Vault to allow secure Consul access for the services.
 	"add-registry-acl-roles": "security-bootstrapper/ADD_REGISTRY_ACL_ROLES",
