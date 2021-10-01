@@ -288,10 +288,11 @@ func flattenConfigJSON(p string, k string, vJSON interface{}, flatConf map[strin
 
 const userSemaphoreFile = ".secrets-config-user"
 const tlsSemaphoreFile = ".secrets-config-tls"
+const kongAdminTokenFile = "kong-admin-jwt"
 
 // Write a security-proxy file
 func securityProxyWriteFile(filename, contents string) (path string, err error) {
-	path = fmt.Sprintf("%s/secrets/edgex-security-proxy-setup/%s", SnapData, filename)
+	path = fmt.Sprintf("%s/secrets/security-proxy-setup/%s", SnapData, filename)
 	err = ioutil.WriteFile(path, []byte(contents), 0600)
 	if err == nil {
 		Debug(fmt.Sprintf("Wrote file '%s'", path))
@@ -303,7 +304,7 @@ func securityProxyWriteFile(filename, contents string) (path string, err error) 
 
 // Read a security-proxy file
 func securityProxyReadFile(filename string) (contents string, err error) {
-	path := fmt.Sprintf("%s/secrets/edgex-security-proxy-setup/%s", SnapData, filename)
+	path := fmt.Sprintf("%s/secrets/security-proxy-setup/%s", SnapData, filename)
 	bytes, err := ioutil.ReadFile(path)
 	if err == nil {
 		contents = string(bytes)
@@ -316,7 +317,7 @@ func securityProxyReadFile(filename string) (contents string, err error) {
 
 // Delete a security-proxy semaphore file
 func securityProxyRemoveSemaphore(filename string) (err error) {
-	path := fmt.Sprintf("%s/secrets/edgex-security-proxy-setup/%s", SnapData, filename)
+	path := fmt.Sprintf("%s/secrets/security-proxy-setup/%s", SnapData, filename)
 	err = os.Remove(path)
 	if err == nil {
 		Debug("Removed file '" + path + "'")
@@ -384,10 +385,16 @@ func securityProxyAddUser(jwtUsername, jwtUserID, jwtAlgorithm, jwtPublicKey str
 	if err != nil {
 		return err
 	}
-	args := []string{"proxy", "adduser", "--token-type", "jwt", "--user", jwtUsername, "--id", jwtUserID, "--algorithm", jwtAlgorithm, "--public_key", publicKeyFilePath}
+
+	kongAdminToken, err := securityProxyReadFile(kongAdminTokenFile)
+	if err != nil {
+		return err
+	}
+
+	args := []string{"proxy", "adduser", "--token-type", "jwt", "--user", jwtUsername, "--id", jwtUserID, "--algorithm", jwtAlgorithm, "--public_key", publicKeyFilePath, "--jwt", kongAdminToken}
 	err = securityProxyExecSecretsConfig(args)
 	if err != nil {
-		return fmt.Errorf("failed to create user - %v", err)
+		return fmt.Errorf("failed to create proxy user - %v", err)
 	}
 	_, err = securityProxyWriteFile(userSemaphoreFile, jwtUsername)
 	if err != nil {
