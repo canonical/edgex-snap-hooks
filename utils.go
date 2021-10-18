@@ -172,14 +172,15 @@ func getEnvVars() error {
 // parameter, and initializes global variables for the
 // commonly used SNAP_ environment variables.
 func Init(setDebug bool, snapName string) error {
-	var err error
-
-	if snapName == "" {
-		return errors.New("snapName cannot be empty")
-	}
-
+	// set global variables
 	debug = setDebug
 	snap = snapName
+
+	var err error
+
+	if snap == "" {
+		return errors.New("snapName cannot be empty")
+	}
 
 	log, err = syslog.New(syslog.LOG_INFO, "edgexfoundry:configure")
 	if err != nil {
