@@ -182,7 +182,7 @@ func Init(setDebug bool, snapName string) error {
 		return errors.New("snapName cannot be empty")
 	}
 
-	log, err = syslog.New(syslog.LOG_INFO, "edgexfoundry:configure")
+	log, err = syslog.New(syslog.LOG_INFO, snap+":hook")
 	if err != nil {
 		return err
 	}
