@@ -102,7 +102,8 @@ var ConfToEnv = map[string]string{
 	"service.request-timeout": "SERVICE_REQUESTTIMEOUT",
 
 	// [SecretStore]
-	"secret-store.secrets-file": "SECRETSTORE_SECRETSFILE",
+	"secret-store.secrets-file":               "SECRETSTORE_SECRETSFILE",
+	"secret-store.disable-scrub-secrets-file": "SECRETSTORE_DISABLESCRUBSECRETSFILE",
 
 	// [Registry] -- not yet supported, would also require consul changes
 
