@@ -20,9 +20,12 @@ package hooks
 
 import (
 	"os"
+	"os/exec"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 // TODO: add more tests (see trello: )
@@ -65,8 +68,8 @@ func TestGetConfigEnvVar(t *testing.T) {
 
 	// test extra key
 	var extraConf = map[string]string{
-		"service.mykey":     "SERVICE_MYKEY",
-		"service.mykey-2":   "SERVICE_MYKEY2",
+		"service.mykey":   "SERVICE_MYKEY",
+		"service.mykey-2": "SERVICE_MYKEY2",
 	}
 
 	// extra key exists
@@ -82,4 +85,23 @@ func TestGetConfigEnvVar(t *testing.T) {
 	// extra key doesn't exist
 	env, ok = getConfigEnvVar("service.fubar", extraConf)
 	assert.False(t, ok)
+}
+
+func TestSetConfig(t *testing.T) {
+	key, value := "mykey", "myvalue"
+
+	cli := NewSnapCtl()
+	err := cli.SetConfig(key, value)
+	require.Nilf(t, err, "Error setting config.", err)
+
+	// check using snapctl
+	require.Equal(t, value, getConfigValue(t, key))
+}
+
+// utility testing functions
+
+func getConfigValue(t *testing.T, key string) string {
+	out, err := exec.Command("snapctl", "get", key).Output()
+	require.Nilf(t, err, "Error getting config value via snapctl.")
+	return strings.TrimSpace(string(out))
 }

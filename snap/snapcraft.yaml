@@ -1,0 +1,17 @@
+name: edgex-snap-hooks
+base: core20
+version: test
+summary: EdgeX Snap Hooks package tester
+description: This snap is used to run tests on this package
+
+grade: devel
+confinement: strict
+
+parts:
+  unit-tests:
+    source: .
+    plugin: go
+    go-channel: 1.16/stable
+    override-build: |
+      make test
+
