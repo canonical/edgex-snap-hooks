@@ -19,6 +19,7 @@
 package hooks
 
 import (
+	"fmt"
 	"os"
 	"os/exec"
 	"strings"
@@ -98,7 +99,33 @@ func TestSetConfig(t *testing.T) {
 	require.Equal(t, value, getConfigValue(t, key))
 }
 
+func TestUnsetConfig(t *testing.T) {
+	key, value := "mykey2", "myvalue"
+
+	// make sure this isn't already set
+	require.Equal(t, "", getConfigValue(t, key))
+
+	// set using snapctl
+	setConfigValue(t, key, value)
+
+	// check using snapctl
+	require.Equal(t, value, getConfigValue(t, key))
+
+	// set using the library
+	cli := NewSnapCtl()
+	err := cli.UnsetConfig(key)
+	require.Nilf(t, err, "Error un-setting config.", err)
+
+	// make sure it has been unset
+	require.Equal(t, "", getConfigValue(t, key))
+}
+
 // utility testing functions
+
+func setConfigValue(t *testing.T, key, value string) {
+	err := exec.Command("snapctl", "set", fmt.Sprintf("%s=%s", key, value)).Run()
+	require.Nilf(t, err, "Error setting config value via snapctl.")
+}
 
 func getConfigValue(t *testing.T, key string) string {
 	out, err := exec.Command("snapctl", "get", key).Output()

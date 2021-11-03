@@ -61,6 +61,7 @@ type CtlCli struct{}
 type SnapCtl interface {
 	Config(key string) (string, error)
 	SetConfig(key string, val string) error
+	UnsetConfig(key string) error
 	Stop(svc string, disable bool) error
 }
 
@@ -214,6 +215,16 @@ func (cc *CtlCli) SetConfig(key string, val string) error {
 	err := exec.Command("snapctl", "set", fmt.Sprintf("%s=%s", key, val)).Run()
 	if err != nil {
 		return fmt.Errorf("snapctl SET failed for %s - %v", key, err)
+	}
+	return nil
+}
+
+// UnsetConfig uses snapctl to unset a config value from a key
+func (cc *CtlCli) UnsetConfig(key string) error {
+
+	err := exec.Command("snapctl", "unset", key).Run()
+	if err != nil {
+		return fmt.Errorf("snapctl UNSET failed for %s - %v", key, err)
 	}
 	return nil
 }
