@@ -1,8 +1,8 @@
 name: Test
 
 on:
-  push:
-    branches: [ master ]
+  # push:
+  #   branches: [ master ]
   pull_request:
     branches: [ master ]
 
@@ -13,5 +13,11 @@ jobs:
     steps:
     - uses: actions/checkout@v2
 
-    - name: Unit Tests
-      run: snapcraft prime unit-tests
+    # this will install and run snapcraft internally
+    - uses: snapcore/action-build@v1
+      # with:
+      #   snapcraft-args: prime
+      #   build-info: false
+
+    # - name: Unit Tests
+    #   run: snapcraft prime unit-tests
