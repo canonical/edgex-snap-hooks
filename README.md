@@ -14,3 +14,11 @@ This module provides support for Go-based configure an install hooks...
 
 ### How to Use ###
 
+TBA
+
+### Testing
+The tests need to run in a snap environment:
+
+```bash
+snapcraft prime
+```
