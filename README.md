@@ -20,5 +20,5 @@ TBA
 The tests need to run in a snap environment:
 
 ```bash
-snapcraft prime
+snapcraft build
 ```
