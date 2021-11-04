@@ -13,15 +13,13 @@ env:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     steps:
     - uses: actions/checkout@v2
 
-    - name: Install Snapcraft with LXD
+    - name: Install Snapcraft
       run: |
         sudo snap install snapcraft --classic
-    #     sudo snap install lxd
-    #     sudo lxd init --auto
 
     - name: Setup LXD
       uses: whywaita/setup-lxd@v1
@@ -29,4 +27,4 @@ jobs:
         lxd_version: latest/stable
 
     - name: Unit Tests
-      run: snapcraft prime unit-tests
+      run: snapcraft build unit-tests
