@@ -20,8 +20,13 @@ jobs:
     - name: Install Snapcraft with LXD
       run: |
         sudo snap install snapcraft --classic
-        sudo snap install lxd
-        sudo lxd init --auto
+    #     sudo snap install lxd
+    #     sudo lxd init --auto
+
+    - name: Setup LXD
+      uses: whywaita/setup-lxd@v1
+      with:
+        lxd_version: latest/stable
 
     - name: Unit Tests
       run: snapcraft prime unit-tests
