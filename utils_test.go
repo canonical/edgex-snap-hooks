@@ -120,6 +120,12 @@ func TestUnsetConfig(t *testing.T) {
 	require.Equal(t, "", getConfigValue(t, key))
 }
 
+func TestStartMultiple(t *testing.T) {
+	t.Skipf("need to run in an active snap")
+	cli := NewSnapCtl()
+	err := cli.StartMultiple(false, "edgexfoundry.consul")
+	require.NoError(t, err, "Error getting services.")
+}
 // utility testing functions
 
 func setConfigValue(t *testing.T, key, value string) {

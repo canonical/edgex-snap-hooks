@@ -248,6 +248,32 @@ func (cc *CtlCli) Start(svc string, enable bool) error {
 	return nil
 }
 
+// StartMultiple uses snapctl to start one or more services and optionally enable all
+func (cc *CtlCli) StartMultiple(enable bool, services ...string) error {
+	if len(services) == 0 {
+		return fmt.Errorf("no services set to start")
+	}
+
+	args := []string{"start"}
+
+	if enable {
+		args = append(args, "--enable")
+	}
+
+	for _, s := range services {
+		args = append(args, SnapName+"."+s)
+	}
+
+	cmd := exec.Command("snapctl", args...)
+
+	std, err := cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("snapctl start failed: %s: %s", err, std)
+	}
+
+	return nil
+}
+
 // Stop uses snapctrl to stop a service and optionally disable it
 func (cc *CtlCli) Stop(svc string, disable bool) error {
 	var cmd *exec.Cmd
