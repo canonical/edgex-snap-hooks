@@ -1,4 +1,6 @@
 # edgex-snap-hooks
+[![Go Reference](https://pkg.go.dev/badge/github.com/canonical/edgex-snap-hooks.svg)](https://pkg.go.dev/github.com/canonical/edgex-snap-hooks)
+
 Snap hooks library use by Go EdgeX service snaps.  
 
 ### What is this repository for? ###
