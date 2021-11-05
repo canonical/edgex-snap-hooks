@@ -93,7 +93,7 @@ func TestSetConfig(t *testing.T) {
 
 	cli := NewSnapCtl()
 	err := cli.SetConfig(key, value)
-	require.Nilf(t, err, "Error setting config.", err)
+	require.NoError(t, err, "Error setting config.")
 
 	// check using snapctl
 	require.Equal(t, value, getConfigValue(t, key))
@@ -114,7 +114,7 @@ func TestUnsetConfig(t *testing.T) {
 	// set using the library
 	cli := NewSnapCtl()
 	err := cli.UnsetConfig(key)
-	require.Nilf(t, err, "Error un-setting config.", err)
+	require.NoError(t, err, "Error un-setting config.")
 
 	// make sure it has been unset
 	require.Equal(t, "", getConfigValue(t, key))
@@ -130,11 +130,11 @@ func TestStartMultiple(t *testing.T) {
 
 func setConfigValue(t *testing.T, key, value string) {
 	err := exec.Command("snapctl", "set", fmt.Sprintf("%s=%s", key, value)).Run()
-	require.Nilf(t, err, "Error setting config value via snapctl.")
+	require.NoError(t, err, "Error setting config value via snapctl.")
 }
 
 func getConfigValue(t *testing.T, key string) string {
 	out, err := exec.Command("snapctl", "get", key).Output()
-	require.Nilf(t, err, "Error getting config value via snapctl.")
+	require.NoError(t, err, "Error getting config value via snapctl.")
 	return strings.TrimSpace(string(out))
 }
