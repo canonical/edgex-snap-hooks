@@ -19,6 +19,7 @@
 package hooks
 
 import (
+	"bufio"
 	"bytes"
 	"encoding/json"
 	"errors"
@@ -27,6 +28,7 @@ import (
 	"log/syslog"
 	"os"
 	"os/exec"
+	"regexp"
 	"strconv"
 	"strings"
 )
@@ -248,6 +250,32 @@ func (cc *CtlCli) Start(svc string, enable bool) error {
 	return nil
 }
 
+// StartMultiple uses snapctl to start one or more services and optionally enable all
+func (cc *CtlCli) StartMultiple(enable bool, services ...string) error {
+	if len(services) == 0 {
+		return fmt.Errorf("no services set to start")
+	}
+
+	args := []string{"start"}
+
+	if enable {
+		args = append(args, "--enable")
+	}
+
+	for _, s := range services {
+		args = append(args, SnapName+"."+s)
+	}
+
+	cmd := exec.Command("snapctl", args...)
+
+	std, err := cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("snapctl start failed: %s: %s", err, std)
+	}
+
+	return nil
+}
+
 // Stop uses snapctrl to stop a service and optionally disable it
 func (cc *CtlCli) Stop(svc string, disable bool) error {
 	var cmd *exec.Cmd
@@ -265,6 +293,75 @@ func (cc *CtlCli) Stop(svc string, disable bool) error {
 	}
 
 	return nil
+}
+
+// service status object
+type service struct {
+	name    string
+	enabled bool
+	active  bool
+	notes   string
+}
+
+// services uses snapctl to get the list of services
+func (cc *CtlCli) services() ([]service, error) {
+
+	cmd := exec.Command("snapctl", "services")
+
+	std, err := cmd.CombinedOutput()
+	if err != nil {
+		return nil, fmt.Errorf("snapctl services failed: %s: %s", err, std)
+	}
+
+	scanner := bufio.NewScanner(bytes.NewReader(std))
+
+	// throw away the header:
+	// Service   Startup   Current   Notes
+	scanner.Scan()
+
+	var services []service
+	for scanner.Scan() {
+		line := scanner.Text()
+
+		// Split by whitespaces up to four parts.
+		// The last part is for notes which may contain spaces in itself.
+		cells := regexp.MustCompile("[[:space:]]+").Split(line, 4)
+		if len(cells) != 4 {
+			return nil, fmt.Errorf("snapctl services: error parsing output: unexpected number of columns")
+		}
+		service := service{
+			name:  cells[0],
+			notes: cells[3],
+		}
+		if cells[1] == "enabled" {
+			service.enabled = true
+		}
+		if cells[2] == "active" {
+			service.active = true
+		}
+		services = append(services, service)
+	}
+
+	Info(fmt.Sprintf("snapctl services: %#v", services))
+
+	return services, nil
+}
+
+// EnabledServices uses snapctl to get the list of enabled services
+func (cc *CtlCli) EnabledServices() ([]string, error) {
+	services, err := cc.services()
+	if err != nil {
+		return nil, err
+	}
+
+	var enabledServices []string
+	for _, service := range services {
+		if service.enabled {
+			enabledServices = append(enabledServices, service.name)
+		}
+	}
+
+	return enabledServices, nil
 }
 
 // p is the current prefix of the config key being processed (e.g. "service", "security.auth")
