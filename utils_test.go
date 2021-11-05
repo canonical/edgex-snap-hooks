@@ -126,6 +126,15 @@ func TestStartMultiple(t *testing.T) {
 	err := cli.StartMultiple(false, "edgexfoundry.consul")
 	require.NoError(t, err, "Error getting services.")
 }
+
+func TestEnabledServices(t *testing.T) {
+	t.Skipf("need to run in an active snap")
+	cli := NewSnapCtl()
+	services, err := cli.EnabledServices()
+	require.NoError(t, err, "Error getting enabled services.")
+	t.Logf("services: %v", services)
+}
+
 // utility testing functions
 
 func setConfigValue(t *testing.T, key, value string) {
