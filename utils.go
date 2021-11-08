@@ -528,13 +528,18 @@ func securityProxySetTLSCertificate(tlsCertificate, tlsPrivateKey, tlsSNI string
 	if err != nil {
 		return err
 	}
-	if tlsSNI != "" {
-		args := []string{"proxy", "tls", "--incert", tlsCertFilename, "--inkey", tlsPrivateKeyFilename, "--snis", tlsSNI}
-		err = securityProxyExecSecretsConfig(args)
-	} else {
-		args := []string{"proxy", "tls", "--incert", tlsCertFilename, "--inkey", tlsPrivateKeyFilename}
-		err = securityProxyExecSecretsConfig(args)
+
+	kongAdminToken, err := securityProxyReadFile(kongAdminTokenFile)
+	if err != nil {
+		return err
 	}
+
+	args := []string{"proxy", "tls", "--incert", tlsCertFilename, "--inkey", tlsPrivateKeyFilename, "--admin_api_jwt", kongAdminToken}
+	if tlsSNI != "" {
+		args = append(args, "--snis", tlsSNI)
+	}
+	err = securityProxyExecSecretsConfig(args)
+
 	if err != nil {
 		return fmt.Errorf("failed to set TLS certificate - %v", err)
 	}
