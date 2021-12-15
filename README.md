@@ -5,13 +5,11 @@ Snap hooks library used by [EdgeX Foundry](https://docs.edgexfoundry.org/) Go se
 It provides utilites to implement snap hooks, including some wrappers for the [`snapctl`](https://snapcraft.io/docs/using-snapctl) commands.
 
 ### Usage
-Make sure you have modules enabled, i.e. have an initialized `go.mod` file.
-
-Run:
+Download or upgrade to the latest version:
 ```
 go get github.com/canonical/edgex-snap-hooks/v2
 ```
-This will add the edgex-snap-hooks to the go.mod file and download it into the module cache.
+Please refer to [go get docs](https://pkg.go.dev/cmd/go#hdr-Add_dependencies_to_current_module_and_install_them) for details.
 
 #### Example
 
