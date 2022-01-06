@@ -1,4 +1,0 @@
-The following open source projects are referenced by edgex-snap-hooks:
-
-***TODO: UPDATE OR DELETE ***
-
