@@ -6,4 +6,4 @@ This product includes software developed at Canonical Ltd (https://canonical.com
 It includes the following dependencies developed by
 the corresponding developers and organisations:
 
-* TBA
+* https://github.com/stretchr/testify by Mat Ryer, Tyler Bunnell and contributors (MIT License)
