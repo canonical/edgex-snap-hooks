@@ -6,11 +6,41 @@ import (
 	"strings"
 )
 
+type command struct {
+	subcommand string
+	args []string
+	options []string
+}
+
+type getCommand struct {
+	command
+}
+
 // Get reads a config option
-func Get(key string) (string, error) {
-	output, err := exec.Command("snapctl", "get", key).CombinedOutput()
+func Get(key ...string) getCommand {
+	var cmd getCommand
+	cmd.subcommand = "get"
+	cmd.args = key
+	return cmd
+}
+
+func (cmd getCommand) Doc() getCommand {
+	cmd.options = append(cmd.options, "-d")
+	return cmd
+}
+
+func (cmd getCommand) Run() (string, error) {
+	return cmd.command.Run()
+}
+
+func (cmd command) Run() (string, error) {
+	args := []string{cmd.subcommand}
+	args = append(args, cmd.options...)
+	args = append(args, cmd.args...)
+
+	output, err := exec.Command("snapctl", args...).CombinedOutput()
 	if err != nil {
-		return "", fmt.Errorf("snapctl get error for %s: %s: %s", key, err, output)
+		return "", fmt.Errorf("%w: %s", err, output)
 	}
 	return strings.TrimSpace(string(output)), nil
 }
