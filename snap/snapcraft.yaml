@@ -13,7 +13,7 @@ apps:
       - bin/set-env.sh
     command: bin/test.sh
   
-    plugs: [network]
+    plugs: [network, home]
 
 parts:
   go:

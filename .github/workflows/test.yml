@@ -31,4 +31,6 @@ jobs:
         sudo snap install ./edgex-snap-hooks_test_amd64.snap --dangerous
 
     - name: Run Tests
-      run: sudo edgex-snap-hooks.test
+      run: |
+        sudo edgex-snap-hooks.test
+        sudo edgex-snap-hooks.test ./snapctl

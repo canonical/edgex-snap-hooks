@@ -24,8 +24,13 @@ func Get(key ...string) getCommand {
 	return cmd
 }
 
-func (cmd getCommand) Doc() getCommand {
+func (cmd getCommand) Document() getCommand {
 	cmd.options = append(cmd.options, "-d")
+	return cmd
+}
+
+func (cmd getCommand) List() getCommand {
+	cmd.options = append(cmd.options, "-l")
 	return cmd
 }
 
