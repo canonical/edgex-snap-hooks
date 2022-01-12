@@ -25,5 +25,10 @@ jobs:
       with:
         lxd_version: latest/stable
 
-    - name: Unit Tests
-      run: snapcraft build unit-tests
+    - name: Build and install the tester Snap
+      run: |
+        snapcraft
+        sudo snap install ./edgex-snap-hooks_test_amd64.snap --dangerous
+
+    - name: Run Tests
+      run: sudo edgex-snap-hooks.test

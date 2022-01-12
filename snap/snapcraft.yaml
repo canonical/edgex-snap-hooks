@@ -7,11 +7,36 @@ description: This snap is used to run tests on this package
 grade: devel
 confinement: strict
 
+apps:
+  test:
+    command-chain: 
+      - bin/set-env.sh
+    command: bin/test.sh
+  
+    plugs: [network]
+
 parts:
-  unit-tests:
+  go:
+    ## Using stage go snap doesn't work, 
+    ## resulting in core dump when running go:
+    # plugin: nil
+    # stage-snaps: 
+    #   - go/1.17
+    # organize:
+    #   '*': go/
+    plugin: dump
+    source: https://go.dev/dl/go1.17.6.linux-amd64.tar.gz
+    organize:
+      "*": go/
+
+  helpers:
+    plugin: dump
+    source: snap/local/helpers
+
+  tests:
+    plugin: dump
     source: .
-    plugin: go
-    go-channel: 1.16/stable
-    override-build: |
-      make test
+
+
+
 
