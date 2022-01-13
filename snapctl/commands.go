@@ -6,42 +6,9 @@ import (
 	"strings"
 )
 
-type command struct {
-	subcommand string
-	args []string
-	options []string
-}
-
-type getCommand struct {
-	command
-}
-
-// Get reads a config option
-func Get(key ...string) getCommand {
-	var cmd getCommand
-	cmd.subcommand = "get"
-	cmd.args = key
-	return cmd
-}
-
-func (cmd getCommand) Document() getCommand {
-	cmd.options = append(cmd.options, "-d")
-	return cmd
-}
-
-func (cmd getCommand) List() getCommand {
-	cmd.options = append(cmd.options, "-l")
-	return cmd
-}
-
-func (cmd getCommand) Run() (string, error) {
-	return cmd.command.Run()
-}
-
-func (cmd command) Run() (string, error) {
-	args := []string{cmd.subcommand}
-	args = append(args, cmd.options...)
-	args = append(args, cmd.args...)
+func run(subcommand string, subargs ...string) (string, error) {
+	args := []string{subcommand}
+	args = append(args, subargs...)
 
 	output, err := exec.Command("snapctl", args...).CombinedOutput()
 	if err != nil {
@@ -49,11 +16,6 @@ func (cmd command) Run() (string, error) {
 	}
 	return strings.TrimSpace(string(output)), nil
 }
-
-// TODO
-// get -d doc
-// get -t strict
-// get multiple
 
 // Set writes a config option
 func Set(key string, val string) error {
