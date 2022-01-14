@@ -62,32 +62,22 @@ Help Options:
 
 type get struct {
 	options    []string
-	plug, slot string
+	_interface string
 	keys       []string
 }
 
-
-// get takes reads config options
+// Get reads config options
+// It takes an arbitrary number of keys as input
 // It returns an object for setting the CLI arguments before running the command
-func Get() get {
-	return get{}
-}
-
-// Keys takes one or more keys
-func (cmd get) Keys(key ...string) get {
+func Get(key ...string) get {
+	var cmd get
 	cmd.keys = key
 	return cmd
 }
 
-// Plug takes a plug name
-func (cmd get) Plug(name string) get {
-	cmd.plug = name
-	return cmd
-}
-
-// Slot takes a slot name
-func (cmd get) Slot(name string) get {
-	cmd.slot = name
+// Interface takes the plug or slot name
+func (cmd get) Interface(name string) get {
+	cmd._interface = name
 	return cmd
 }
 
@@ -98,10 +88,10 @@ func (cmd get) Document() get {
 	return cmd
 }
 
-// List sets the following command option:
-// -l	strict typing with nulls and quoted strings
-func (cmd get) List() get {
-	cmd.options = append(cmd.options, "-l")
+// Strict sets the following command option:
+// -t	strict typing with nulls and quoted strings
+func (cmd get) Strict() get {
+	cmd.options = append(cmd.options, "-t")
 	return cmd
 }
 
@@ -117,11 +107,8 @@ func (cmd get) Run() (string, error) {
 	// options
 	args = append(args, cmd.options...)
 	// plug|slot, pre-validated
-	if cmd.plug != "" {
-		args = append(args, ":"+cmd.plug)
-	}
-	if cmd.slot != "" {
-		args = append(args, ":"+cmd.slot)
+	if cmd._interface != "" {
+		args = append(args, ":"+cmd._interface)
 	}
 	// keys
 	args = append(args, cmd.keys...)
@@ -130,14 +117,8 @@ func (cmd get) Run() (string, error) {
 }
 
 func (cmd get) validate() error {
-	if cmd.plug != "" && cmd.slot != "" {
-		return errors.New("only one of plug or slot can be set")
-	}
-	if strings.HasPrefix(cmd.plug, ":") {
-		return errors.New("plug name must not contain colon as prefix")
-	}
-	if strings.HasPrefix(cmd.slot, ":") {
-		return errors.New("slot name must not contain colon as prefix")
+	if strings.HasPrefix(cmd._interface, ":") {
+		return errors.New("interface plug/slot name must not contain colon as prefix")
 	}
 	return nil
 }
