@@ -118,6 +118,7 @@ func Debug(msg string) {
 
 // Error writes the given msg to sylog (sev=LOG_ERROR).
 func Error(msg string) {
+	fmt.Fprintf(os.Stderr, msg)
 	log.Err(msg)
 }
 
