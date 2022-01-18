@@ -118,6 +118,7 @@ func Debug(msg string) {
 
 // Error writes the given msg to sylog (sev=LOG_ERROR).
 func Error(msg string) {
+	fmt.Fprintf(os.Stderr, msg)
 	log.Err(msg)
 }
 
@@ -204,29 +205,27 @@ func NewSnapCtl() *CtlCli {
 
 // Config uses snapctl to get a value from a key, or returns error.
 func (cc *CtlCli) Config(key string) (string, error) {
-	out, err := exec.Command("snapctl", "get", key).Output()
+	output, err := exec.Command("snapctl", "get", key).CombinedOutput()
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("snapctl get failed for %s: %s: %s", key, err, output)
 	}
-	return strings.TrimSpace(string(out)), nil
+	return strings.TrimSpace(string(output)), nil
 }
 
 // SetConfig uses snapctl to set a config value from a key, or returns error.
 func (cc *CtlCli) SetConfig(key string, val string) error {
-
-	err := exec.Command("snapctl", "set", fmt.Sprintf("%s=%s", key, val)).Run()
+	output, err := exec.Command("snapctl", "set", fmt.Sprintf("%s=%s", key, val)).CombinedOutput()
 	if err != nil {
-		return fmt.Errorf("snapctl SET failed for %s - %v", key, err)
+		return fmt.Errorf("snapctl set failed for %s: %s: %s", key, err, output)
 	}
 	return nil
 }
 
 // UnsetConfig uses snapctl to unset a config value from a key
 func (cc *CtlCli) UnsetConfig(key string) error {
-
-	err := exec.Command("snapctl", "unset", key).Run()
+	output, err := exec.Command("snapctl", "unset", key).CombinedOutput()
 	if err != nil {
-		return fmt.Errorf("snapctl UNSET failed for %s - %v", key, err)
+		return fmt.Errorf("snapctl unset failed for %s: %s: %s", key, err, output)
 	}
 	return nil
 }
@@ -242,9 +241,9 @@ func (cc *CtlCli) Start(svc string, enable bool) error {
 		cmd = exec.Command("snapctl", "start", name)
 	}
 
-	err := cmd.Run()
+	output, err := cmd.CombinedOutput()
 	if err != nil {
-		return fmt.Errorf("snapctl start %s failed - %v", name, err)
+		return fmt.Errorf("snapctl start %s failed: %s: %s", name, err, output)
 	}
 
 	return nil
@@ -266,11 +265,9 @@ func (cc *CtlCli) StartMultiple(enable bool, services ...string) error {
 		args = append(args, SnapName+"."+s)
 	}
 
-	cmd := exec.Command("snapctl", args...)
-
-	std, err := cmd.CombinedOutput()
+	output, err := exec.Command("snapctl", args...).CombinedOutput()
 	if err != nil {
-		return fmt.Errorf("snapctl start failed: %s: %s", err, std)
+		return fmt.Errorf("snapctl start failed: %s: %s", err, output)
 	}
 
 	return nil
@@ -287,9 +284,9 @@ func (cc *CtlCli) Stop(svc string, disable bool) error {
 		cmd = exec.Command("snapctl", "stop", name)
 	}
 
-	err := cmd.Run()
+	output, err := cmd.CombinedOutput()
 	if err != nil {
-		return fmt.Errorf("snapctl stop %s failed - %v", name, err)
+		return fmt.Errorf("snapctl stop %s failed: %s: %s", name, err, output)
 	}
 
 	return nil
