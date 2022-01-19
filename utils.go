@@ -643,6 +643,8 @@ func HandleEdgeXConfig(service, envJSON string, extraConf map[string]string) err
 		// This uses the standard naming schema but doesn't actually use environment variables
 		if service == "security-proxy" {
 			value := strings.TrimSpace(v)
+			// These config options are read and validated in the loop,
+			// but handled collectively afterwards
 			switch k {
 			case "user":
 				if value != "" {
@@ -695,35 +697,45 @@ func HandleEdgeXConfig(service, envJSON string, extraConf map[string]string) err
 		}
 	}
 
+	// install-mode is set in the install hook of edgexfoundry
+	installMode, err := NewSnapCtl().Config("install-mode")
+	if err != nil {
+		return fmt.Errorf("failed to read 'install-mode': %s", err)
+	}
+
+	// post-startup config handling
+	if installMode != "defer-startup" {
+		if service == "security-proxy" {
+			if jwtUsername == "" && jwtPublicKey == "" {
+				// if the values have been set to "" then delete the current user
+				securityProxyDeleteCurrentUserIfSet()
+			} else if jwtUsername != "" && jwtPublicKey != "" {
+				// else add a new user
+				err = securityProxyAddUser(jwtUsername, jwtUserID, jwtAlgorithm, jwtPublicKey)
+				if err != nil {
+					return err
+				}
+			}
+
+			if tlsCertificate == "" && tlsPrivateKey == "" {
+				// if the values have been set to "" then clear the semaphore so that a new cert can be set
+				securityProxyDeleteCurrentTLSCertIfSet()
+			} else if tlsCertificate != "" && tlsPrivateKey != "" {
+				// Set the TLS certificate and private key
+				err = securityProxySetTLSCertificate(tlsCertificate, tlsPrivateKey, tlsSNI)
+				if err != nil {
+					return err
+				}
+			}
+		}
+	}
+
 	// Handle security-* service naming. The service names in this
 	// hook historically do not align with the actual binary commands.
 	// As such, when handling configuration settings for them, we need
 	// to translate the hook name to the actual binary name.
 	if service == "security-proxy" {
 		service = "security-proxy-setup"
-
-		if jwtUsername == "" && jwtPublicKey == "" {
-			// if the values have been set to "" then delete the current user
-			securityProxyDeleteCurrentUserIfSet()
-		} else if jwtUsername != "" && jwtPublicKey != "" {
-			// else add a new user
-			err = securityProxyAddUser(jwtUsername, jwtUserID, jwtAlgorithm, jwtPublicKey)
-			if err != nil {
-				return err
-			}
-		}
-
-		if tlsCertificate == "" && tlsPrivateKey == "" {
-			// if the values have been set to "" then clear the semaphore so that a new cert can be set
-			securityProxyDeleteCurrentTLSCertIfSet()
-		} else if tlsCertificate != "" && tlsPrivateKey != "" {
-			// Set the TLS certificate and private key
-			err = securityProxySetTLSCertificate(tlsCertificate, tlsPrivateKey, tlsSNI)
-			if err != nil {
-				return err
-			}
-		}
-
 	} else if service == "security-secret-store" {
 		service = "security-secretstore-setup"
 	}
