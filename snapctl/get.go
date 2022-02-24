@@ -1,64 +1,65 @@
+/*
+Usage help for snapctl get subcommand:
+
+	Usage:
+	snapctl [OPTIONS] get [get-OPTIONS] [:<plug|slot>] [<keys>...]
+
+	The get command prints configuration options for the current snap.
+
+	$ snapctl get username
+	frank
+
+	If multiple option names are provided, a document is returned:
+
+	$ snapctl get username password
+	{
+	"username": "frank",
+	"password": "..."
+	}
+
+	Nested values may be retrieved via a dotted path:
+
+	$ snapctl get author.name
+	frank
+
+	Values of interface connection settings may be printed with:
+
+	$ snapctl get :myplug usb-vendor
+	$ snapctl get :myslot path
+
+	This will return the named setting from the local interface endpoint, whether a
+	plug
+	or a slot. Returning the setting from the connected snap's endpoint is also
+	possible
+	by explicitly requesting that via the --plug and --slot command line options:
+
+	$ snapctl get :myplug --slot usb-vendor
+
+	This requests the "usb-vendor" setting from the slot that is connected to
+	"myplug".
+
+
+	Help Options:
+	-h, --help              Show this help message
+
+	[get command options]
+			--slot          return attribute values from the slot side of the
+							connection
+			--plug          return attribute values from the plug side of the
+							connection
+		-d                  always return document, even with single key
+		-t                  strict typing with nulls and quoted strings
+
+	[get command arguments]
+	<keys>:                 option keys
+*/
+
 package snapctl
 
 import (
 	"errors"
 	"strings"
 )
-
-/*
-$ snapctl get --help
-Usage:
-  snapctl [OPTIONS] get [get-OPTIONS] [:<plug|slot>] [<keys>...]
-
-The get command prints configuration options for the current snap.
-
-$ snapctl get username
-frank
-
-If multiple option names are provided, a document is returned:
-
-$ snapctl get username password
-{
-"username": "frank",
-"password": "..."
-}
-
-Nested values may be retrieved via a dotted path:
-
-$ snapctl get author.name
-frank
-
-Values of interface connection settings may be printed with:
-
-$ snapctl get :myplug usb-vendor
-$ snapctl get :myslot path
-
-This will return the named setting from the local interface endpoint, whether a
-plug
-or a slot. Returning the setting from the connected snap's endpoint is also
-possible
-by explicitly requesting that via the --plug and --slot command line options:
-
-$ snapctl get :myplug --slot usb-vendor
-
-This requests the "usb-vendor" setting from the slot that is connected to
-"myplug".
-
-
-Help Options:
-  -h, --help              Show this help message
-
-[get command options]
-          --slot          return attribute values from the slot side of the
-                          connection
-          --plug          return attribute values from the plug side of the
-                          connection
-      -d                  always return document, even with single key
-      -t                  strict typing with nulls and quoted strings
-
-[get command arguments]
-  <keys>:                 option keys
-*/
 
 type get struct {
 	options    []string
