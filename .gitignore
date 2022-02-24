@@ -3,3 +3,5 @@
 .idea
 coverage.out
 VERSION
+prime
+squashfs-root

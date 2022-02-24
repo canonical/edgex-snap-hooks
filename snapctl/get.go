@@ -67,7 +67,7 @@ type get struct {
 	keys       []string
 }
 
-// Get reads config options
+// Get reads config options or interface attributes
 // It takes an arbitrary number of keys as input
 // It returns an object for setting the CLI arguments before running the command
 func Get(key ...string) get {

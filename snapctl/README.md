@@ -10,7 +10,7 @@ Wrappers for following subcommands are implemented:
 - [ ] `reboot`: Control the reboot behavior of the system          
 - [ ] `restart`: Restart services    
 - [ ] `services`: Query the status of services      
-- [ ] `set`: Changes configuration options
+- [x] `set`: Changes configuration options
 - [ ] `set-health`: Report the health status of a snap
 - [ ] `start`: Start services 
 - [ ] `stop`: Stop services

@@ -6,6 +6,6 @@ echo "Running tests from $0"
 
 echo "Change directory to $SNAP"
 cd $SNAP
-go test -v $1 --cover
+go test -v --cover "$@"
 
 # go vet ./...
