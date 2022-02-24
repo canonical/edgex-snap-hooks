@@ -18,8 +18,8 @@ func setConfigValue(t *testing.T, key, value string) {
 		"Error setting config value via snapctl: %s", output)
 }
 
-func getConfigValue(t *testing.T, key string) string {
-	output, err := exec.Command("snapctl", "get", key).CombinedOutput()
+func getConfigStrictValue(t *testing.T, key string) string {
+	output, err := exec.Command("snapctl", "get", "-t", key).CombinedOutput()
 	require.NoError(t, err,
 		"Error getting config value via snapctl: %s", output)
 	return strings.TrimSpace(string(output))
