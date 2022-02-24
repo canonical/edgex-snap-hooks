@@ -204,7 +204,6 @@ func NewSnapCtl() *CtlCli {
 }
 
 // Config uses snapctl to get a value from a key, or returns error.
-// Deprecated: Use snapctl.Get(key).Run()
 func (cc *CtlCli) Config(key string) (string, error) {
 	output, err := exec.Command("snapctl", "get", key).CombinedOutput()
 	if err != nil {
