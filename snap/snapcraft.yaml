@@ -15,6 +15,16 @@ apps:
   
     plugs: [network, home]
 
+  # Mocked apps needed for testing
+  mock-service:
+    command: bin/mock-app.sh
+    daemon: simple
+  mock-service-disabled:
+    command: bin/mock-app.sh
+    daemon: simple
+    install-mode: disable
+
+
 parts:
   go:
     ## Using stage go snap doesn't work, 
