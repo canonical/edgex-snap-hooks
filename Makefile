@@ -1,5 +1,10 @@
-.PHONY: test
+
+try:
+	snapcraft try
+	snap try prime
+
+sync:
+	cp -r $$(ls | egrep -v '^prime') prime/
 
 test:
-	go test -v ./... --cover
-	go vet ./...
+	sudo edgex-snap-hooks.test ./ ./snapctl

@@ -62,6 +62,11 @@ The tests files are read relative to project source inside the snap.
 The `edgex-snap-hooks.test` command runs `go test -v --cover` internally and accepts
 all other go test arguments.
 
+Run all tests:
+```
+make test
+```
+
 Run top-level tests:
 ```bash
 sudo edgex-snap-hooks.test
@@ -79,15 +84,13 @@ sudo edgex-snap-hooks.test ./snapctl -run TestGet
 
 #### Development
 ```
-snapcraft try
-snap try prime
-sudo edgex-snap-hooks.test ./snapctl
+make try
 ```
 
 You can now edit the files locally, copy them to prime directory, and re-run the
 tests without rebuilding the project. E.g.:
 
 ```
-cp -r snapctl prime/ && \
+make sync
 sudo edgex-snap-hooks.test ./snapctl
 ```

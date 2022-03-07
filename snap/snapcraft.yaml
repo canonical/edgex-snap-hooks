@@ -7,20 +7,19 @@ description: This snap is used to run tests on this package
 grade: devel
 confinement: strict
 
+
 apps:
+  # App for running the tests
   test:
-    command-chain: 
-      - bin/set-env.sh
-    command: bin/test.sh
-  
+    command: snap/local/bin/test.sh
     plugs: [network, home]
 
   # Mocked apps needed for testing
   mock-service:
-    command: bin/mock-app.sh
+    command: snap/local/bin/mock-app.sh
     daemon: simple
   mock-service-disabled:
-    command: bin/mock-app.sh
+    command: snap/local/bin/mock-app.sh
     daemon: simple
     install-mode: disable
 
@@ -39,14 +38,7 @@ parts:
     organize:
       "*": go/
 
-  helpers:
-    plugin: dump
-    source: snap/local/helpers
-
+  # maintain test and binary files structure to simplify test development
   tests:
     plugin: dump
     source: .
-
-
-
-

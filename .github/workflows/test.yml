@@ -32,5 +32,4 @@ jobs:
 
     - name: Run Tests
       run: |
-        sudo edgex-snap-hooks.test
-        sudo edgex-snap-hooks.test ./snapctl
+        make test
