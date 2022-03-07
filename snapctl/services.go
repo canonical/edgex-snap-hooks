@@ -1,7 +1,6 @@
 /*
 Usage help for snapctl services subcommand:
 
-	Usage:
 	snapctl [OPTIONS] services [<service>...]
 
 	The services command lists information about the services specified.

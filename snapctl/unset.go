@@ -1,7 +1,6 @@
 /*
 Usage help for snapctl unset subcommand:
 
-	Usage:
 	snapctl [OPTIONS] unset [ConfKeys...]
 
 	The unset command removes the provided configuration options as requested.

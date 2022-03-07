@@ -9,12 +9,12 @@ Wrappers for following subcommands are implemented:
 - [ ] `is-connected`: Return success if the given plug or slot is connected, and failure otherwise   
 - [ ] `reboot`: Control the reboot behavior of the system          
 - [ ] `restart`: Restart services    
-- [ ] `services`: Query the status of services      
+- [x] `services`: Query the status of services      
 - [x] `set`: Changes configuration options
 - [ ] `set-health`: Report the health status of a snap
-- [ ] `start`: Start services 
-- [ ] `stop`: Stop services
+- [x] `start`: Start services 
+- [x] `stop`: Stop services
 - [ ] `system-mode`: Get the current system mode and associated details
-- [ ] `unset`: Remove configuration options
+- [x] `unset`: Remove configuration options
 
 The commands and descriptions are from `snapctl --help`.

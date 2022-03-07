@@ -1,7 +1,6 @@
 /*
 Usage help for snapctl set subcommand:
 
-	Usage:
 	snapctl [OPTIONS] set [set-OPTIONS] [:<plug|slot>] [key=value...]
 
 	The set command changes the provided configuration options as requested.

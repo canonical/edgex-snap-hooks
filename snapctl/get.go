@@ -1,7 +1,6 @@
 /*
 Usage help for snapctl get subcommand:
 
-	Usage:
 	snapctl [OPTIONS] get [get-OPTIONS] [:<plug|slot>] [<keys>...]
 
 	The get command prints configuration options for the current snap.
