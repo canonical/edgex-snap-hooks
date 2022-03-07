@@ -54,6 +54,12 @@ func Set(keyValue ...string) (cmd set) {
 	cmd.keyValues = keyValue
 
 	cmd.validators = append(cmd.validators, func() error {
+		for i := 0; i < len(cmd.keyValues); i += 2 {
+			key := cmd.keyValues[i]
+			if strings.Contains(key, " ") {
+				return fmt.Errorf("key must not contain spaces. Got: '%s'", key)
+			}
+		}
 		if len(cmd.keyValues)%2 != 0 {
 			return fmt.Errorf("key-value inputs must be even and in pairs, got %d",
 				len(cmd.keyValues))
@@ -102,7 +108,7 @@ func (cmd set) Run() error {
 	}
 
 	// construct the command args
-	// [get-OPTIONS] [:<plug|slot>] [<keys>...]
+	// set [set-OPTIONS] [:<plug|slot>] [key=value...]
 	var args []string
 	// options
 	args = append(args, cmd.options...)

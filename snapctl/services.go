@@ -17,7 +17,8 @@ import (
 )
 
 type services struct {
-	names []string
+	names      []string
+	validators []func() error
 }
 
 // service status object
@@ -30,16 +31,28 @@ type service struct {
 // Services lists information about the services
 // It takes zero or more service names as input
 // It returns an object for setting the CLI arguments before running the command
-func Services(name ...string) services {
-	var cmd services
+func Services(name ...string) (cmd services) {
 	cmd.names = name
+
+	cmd.validators = append(cmd.validators, func() error {
+		for _, name := range cmd.names {
+			if strings.Contains(name, " ") {
+				return fmt.Errorf("service name must not contain spaces. Got: '%s'", name)
+			}
+		}
+		return nil
+	})
+
 	return cmd
 }
 
 // Run executes the services command
 func (cmd services) Run() (map[string]service, error) {
-	if err := cmd.validate(); err != nil {
-		return nil, err
+	// validate all input
+	for _, validate := range cmd.validators {
+		if err := validate(); err != nil {
+			return nil, err
+		}
 	}
 
 	// construct the command args
@@ -97,13 +110,4 @@ func (cmd services) parseOutput(output string) (map[string]service, error) {
 	}
 
 	return services, nil
-}
-
-func (cmd services) validate() error {
-	for _, name := range cmd.names {
-		if strings.Contains(name, " ") {
-			return fmt.Errorf("service name must not contain spaces. Got: '%s'", name)
-		}
-	}
-	return nil
 }

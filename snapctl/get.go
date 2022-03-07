@@ -57,7 +57,7 @@ Usage help for snapctl get subcommand:
 package snapctl
 
 import (
-	"errors"
+	"fmt"
 	"strings"
 )
 
@@ -65,14 +65,27 @@ type get struct {
 	options    []string
 	_interface string
 	keys       []string
+	validators []func() error
 }
 
 // Get reads config options or interface attributes
 // It takes an arbitrary number of keys as input
 // It returns an object for setting the CLI arguments before running the command
-func Get(key ...string) get {
-	var cmd get
+func Get(key ...string) (cmd get) {
 	cmd.keys = key
+
+	cmd.validators = append(cmd.validators, func() error {
+		for _, key := range cmd.keys {
+			if strings.Contains(key, " ") {
+				return fmt.Errorf("key must not contain spaces. Got: '%s'", key)
+			}
+		}
+		if strings.HasPrefix(cmd._interface, ":") {
+			return fmt.Errorf("interface plug/slot name must not contain colon as prefix")
+		}
+		return nil
+	})
+
 	return cmd
 }
 
@@ -98,12 +111,15 @@ func (cmd get) Strict() get {
 
 // Run executes the get command
 func (cmd get) Run() (string, error) {
-	if err := cmd.validate(); err != nil {
-		return "", err
+	// validate all input
+	for _, validate := range cmd.validators {
+		if err := validate(); err != nil {
+			return "", err
+		}
 	}
 
 	// construct the command args
-	// [get-OPTIONS] [:<plug|slot>] [<keys>...]
+	// get [get-OPTIONS] [:<plug|slot>] [<keys>...]
 	var args []string
 	// options
 	args = append(args, cmd.options...)
@@ -115,11 +131,4 @@ func (cmd get) Run() (string, error) {
 	args = append(args, cmd.keys...)
 
 	return run("get", args...)
-}
-
-func (cmd get) validate() error {
-	if strings.HasPrefix(cmd._interface, ":") {
-		return errors.New("interface plug/slot name must not contain colon as prefix")
-	}
-	return nil
 }

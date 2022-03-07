@@ -56,7 +56,7 @@ func TestServices(t *testing.T) {
 			require.Error(t, err)
 		})
 
-		t.Run("service name with space", func(t *testing.T) {
+		t.Run("reject service name with space", func(t *testing.T) {
 			_, err := Services("bad name").Run()
 			require.Error(t, err)
 		})

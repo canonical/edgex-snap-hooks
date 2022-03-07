@@ -24,6 +24,11 @@ func TestGet(t *testing.T) {
 		t.Run("multiple", func(t *testing.T) {
 			t.Skip("TODO")
 		})
+
+		t.Run("reject key with space", func(t *testing.T) {
+			_, err := Get("bad key").Run()
+			require.Error(t, err)
+		})
 	})
 
 	t.Run("snapctl get -d", func(t *testing.T) {
@@ -50,8 +55,15 @@ func TestGet(t *testing.T) {
 	})
 
 	t.Run("snapctl get :interface", func(t *testing.T) {
-		t.Skip("TODO: test interface hooks")
-		// interface attributes can only be read during the execution of interface hooks
+		t.Run("simple", func(t *testing.T) {
+			t.Skip("TODO: test interface hooks")
+			// interface attributes can only be read during the execution of interface hooks
+		})
+
+		t.Run("prefix with colon", func(t *testing.T) {
+			_, err := Get().Interface(":test-plug").Run()
+			require.Error(t, err, "interface has colon as prefix")
+		})
 	})
 
 	t.Run("snapctl get :interface --slot", func(t *testing.T) {
@@ -64,13 +76,5 @@ func TestGet(t *testing.T) {
 		t.Skip("TODO: test interface hooks")
 		// interface attributes can only be read during the execution of interface hooks
 		// cannot use --plug or --slot without <snap>:<plug|slot> argument
-	})
-}
-
-// TestGetValidate tests the validation done via this library
-func TestGetValidate(t *testing.T) {
-	t.Run("interface colon prefix", func(t *testing.T) {
-		_, err := Get().Interface(":test-plug").Run()
-		require.Error(t, err, "interface has colon as prefix")
 	})
 }

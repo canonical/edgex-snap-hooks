@@ -44,6 +44,11 @@ func TestSet(t *testing.T) {
 			err := Set(testKey, testValue, testKey2).Run()
 			require.Error(t, err)
 		})
+
+		t.Run("reject key with space", func(t *testing.T) {
+			_, err := Get("bad key").Run()
+			require.Error(t, err)
+		})
 	})
 
 	t.Run("snapctl set -t", func(t *testing.T) {
