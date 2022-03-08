@@ -36,7 +36,7 @@ func init() {
 	if !debug {
 		snapctl.Unset("debug").Run()
 		if value, err := snapctl.Get("debug").Run(); err != nil {
-			fmt.Fprint(os.Stderr, err)
+			Stderr(err)
 			os.Exit(1)
 		} else {
 			debug = (value == "true")
@@ -45,12 +45,12 @@ func init() {
 
 	snapInstanceKey = os.Getenv("SNAP_INSTANCE_NAME")
 	if snapInstanceKey == "" {
-		fmt.Fprint(os.Stderr, "SNAP_INSTANCE_NAME environment variable not set.")
+		Stderr("SNAP_INSTANCE_NAME environment variable not set.")
 		os.Exit(1)
 	}
 
 	if err := setupSyslogWriter(snapInstanceKey); err != nil {
-		fmt.Fprint(os.Stderr, err)
+		Stderr(err)
 		os.Exit(1)
 	}
 
@@ -102,7 +102,7 @@ func Error(a ...interface{}) {
 	msg := fmt.Sprint(a...)
 	slog.Err(msg)
 	// print to stderr as well for snap command error output
-	fmt.Fprint(os.Stderr, msg)
+	Stderr(a...)
 }
 
 // Errorf writes the given input to syslog (sev=LOG_ERROR).
@@ -133,4 +133,16 @@ func Warn(a ...interface{}) {
 // It formats similar to fmt.Sprintf
 func Warnf(format string, a ...interface{}) {
 	Warn(fmt.Sprintf(format, a...))
+}
+
+// Stderr writes the given input to standard error.
+// It formats similar to fmt.Sprint
+func Stderr(a ...interface{}) {
+	fmt.Fprint(os.Stderr, a...)
+}
+
+// Stderrf writes the given input to standard error.
+// It formats similar to fmt.Sprintf
+func Stderrf(format string, a ...interface{}) {
+	fmt.Fprintf(os.Stderr, format, a...)
 }
