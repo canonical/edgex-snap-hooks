@@ -171,7 +171,8 @@ func Init(setDebug bool, snapName string) error {
 
 func init() {
 	if err := getEnvVars(); err != nil {
-		log.Stderr(err)
+		log.Error(err)
+		os.Exit(1)
 	}
 }
 

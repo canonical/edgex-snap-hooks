@@ -38,7 +38,7 @@ func init() {
 		snapctl.Unset("debug").Run()
 		value, err := snapctl.Get("debug").Run()
 		if err != nil {
-			Stderr(err)
+			stderr(err)
 			os.Exit(1)
 		}
 		debug = (value == "true")
@@ -46,13 +46,13 @@ func init() {
 
 	snapInstanceKey = os.Getenv("SNAP_INSTANCE_NAME")
 	if snapInstanceKey == "" {
-		Stderr("SNAP_INSTANCE_NAME environment variable not set.")
+		stderr("SNAP_INSTANCE_NAME environment variable not set.")
 		os.Exit(1)
 	}
 	tag = snapInstanceKey
 
 	if err := setupSyslogWriter(tag); err != nil {
-		Stderr(err)
+		stderr(err)
 		os.Exit(1)
 	}
 
@@ -105,7 +105,7 @@ func Error(a ...interface{}) {
 	msg := fmt.Sprint(a...)
 	slog.Err(msg)
 	// print to stderr as well for snap command error output
-	Stderr(a...)
+	stderr(a...)
 }
 
 // Errorf writes the given input to syslog (sev=LOG_ERROR).
@@ -138,15 +138,10 @@ func Warnf(format string, a ...interface{}) {
 	Warn(fmt.Sprintf(format, a...))
 }
 
-// Stderr writes the given input to standard error.
-// It formats similar to fmt.Sprintf, adds the global tag as prefix, and appends
-// a newline
-func Stderr(a ...interface{}) {
+// stderr writes the given input to standard error.
+// It formats similar to fmt.Sprint, adds the global tag as prefix, and appends a newline
+func stderr(a ...interface{}) {
+	// Standard errors get collected with "snapd" as syslog app.
+	// We add the tag as prefix to distinguish these from other snapd logs.
 	fmt.Fprintf(os.Stderr, tag+": %s\n", a...)
-}
-
-// Stderrf writes the given input to standard error.
-// It formats similar to fmt.Sprintf and calls log.Stderr which appends a newline
-func Stderrf(format string, a ...interface{}) {
-	Stderr(fmt.Sprintf(format, a...))
 }
