@@ -28,6 +28,7 @@ var (
 	slog            *syslog.Writer
 	debug           bool
 	snapInstanceKey string // used as default syslog tag and tag prefix
+	tag             string // syslog tag and staderr prefix
 )
 
 func init() {
@@ -35,12 +36,12 @@ func init() {
 	// snap config option overrides environment variable
 	if !debug {
 		snapctl.Unset("debug").Run()
-		if value, err := snapctl.Get("debug").Run(); err != nil {
+		value, err := snapctl.Get("debug").Run()
+		if err != nil {
 			Stderr(err)
 			os.Exit(1)
-		} else {
-			debug = (value == "true")
 		}
+		debug = (value == "true")
 	}
 
 	snapInstanceKey = os.Getenv("SNAP_INSTANCE_NAME")
@@ -48,8 +49,9 @@ func init() {
 		Stderr("SNAP_INSTANCE_NAME environment variable not set.")
 		os.Exit(1)
 	}
+	tag = snapInstanceKey
 
-	if err := setupSyslogWriter(snapInstanceKey); err != nil {
+	if err := setupSyslogWriter(tag); err != nil {
 		Stderr(err)
 		os.Exit(1)
 	}
@@ -72,7 +74,8 @@ func setupSyslogWriter(tag string) error {
 // This function is NOT thread-safe. It should not be called concurrently with
 // the other logging functions of this package.
 func SetComponentName(component string) {
-	tag := snapInstanceKey + "." + component
+	// update global value
+	tag = snapInstanceKey + "." + component
 	Debugf("Changing syslog tag to: %s", tag)
 
 	if err := setupSyslogWriter(tag); err != nil {
@@ -136,13 +139,14 @@ func Warnf(format string, a ...interface{}) {
 }
 
 // Stderr writes the given input to standard error.
-// It formats similar to fmt.Sprintln
+// It formats similar to fmt.Sprintf, adds the global tag as prefix, and appends
+// a newline
 func Stderr(a ...interface{}) {
-	fmt.Fprintln(os.Stderr, a...)
+	fmt.Fprintf(os.Stderr, tag+": %s\n", a...)
 }
 
 // Stderrf writes the given input to standard error.
-// It formats similar to fmt.Sprintf
+// It formats similar to fmt.Sprintf and calls log.Stderr which appends a newline
 func Stderrf(format string, a ...interface{}) {
-	fmt.Fprintf(os.Stderr, format, a...)
+	Stderr(fmt.Sprintf(format, a...))
 }
