@@ -31,34 +31,52 @@ var (
 )
 
 func init() {
-	if value, err := snapctl.Get("debug").Run(); err != nil {
-		panic(err)
-	} else {
-		debug = (value == "true")
+	debug = (os.Getenv("DEBUG") == "true")
+	// snap config option overrides environment variable
+	if !debug {
+		snapctl.Unset("debug").Run()
+		if value, err := snapctl.Get("debug").Run(); err != nil {
+			fmt.Fprint(os.Stderr, err)
+			os.Exit(1)
+		} else {
+			debug = (value == "true")
+		}
 	}
 
 	snapInstanceKey = os.Getenv("SNAP_INSTANCE_NAME")
 	if snapInstanceKey == "" {
-		panic("SNAP_INSTANCE_NAME environment variable not set.")
+		fmt.Fprint(os.Stderr, "SNAP_INSTANCE_NAME environment variable not set.")
+		os.Exit(1)
 	}
 
-	var err error
-	slog, err = syslog.New(syslog.LOG_INFO, snapInstanceKey)
-	if err != nil {
-		panic(err)
+	if err := setupSyslogWriter(snapInstanceKey); err != nil {
+		fmt.Fprint(os.Stderr, err)
+		os.Exit(1)
 	}
+
+	Debugf("debug=%t", debug)
 }
 
-// SetComponentName adds a component name to syslog app name as "my-snap.<component>"
-// The default app name is just "my-snap", read from the snap environment.
+func setupSyslogWriter(tag string) error {
+	writer, err := syslog.New(syslog.LOG_INFO, tag)
+	if err != nil {
+		return err
+	}
+	// switch to new global writer only if no error
+	slog = writer
+	return nil
+}
+
+// SetComponentName adds a component name to syslog tag as "my-snap.<component>"
+// The default tag is just "my-snap", read from the snap environment.
 // This function is NOT thread-safe. It should not be called concurrently with
 // the other logging functions of this package.
-// Syslog app name: https://datatracker.ietf.org/doc/html/rfc5424#section-6.2.5
 func SetComponentName(component string) {
-	var err error
-	slog, err = syslog.New(syslog.LOG_INFO, snapInstanceKey+"."+component)
-	if err != nil {
-		panic(err)
+	tag := snapInstanceKey + "." + component
+	Debugf("Changing syslog tag to: %s", tag)
+
+	if err := setupSyslogWriter(tag); err != nil {
+		Errorf("Error changing syslog tag: %s", err)
 	}
 }
 
