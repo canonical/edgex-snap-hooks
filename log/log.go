@@ -136,9 +136,9 @@ func Warnf(format string, a ...interface{}) {
 }
 
 // Stderr writes the given input to standard error.
-// It formats similar to fmt.Sprint
+// It formats similar to fmt.Sprintln
 func Stderr(a ...interface{}) {
-	fmt.Fprint(os.Stderr, a...)
+	fmt.Fprintln(os.Stderr, a...)
 }
 
 // Stderrf writes the given input to standard error.
