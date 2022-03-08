@@ -28,7 +28,7 @@ var (
 	slog            *syslog.Writer
 	debug           bool
 	snapInstanceKey string // used as default syslog tag and tag prefix
-	tag             string // syslog tag and staderr prefix
+	tag             string // syslog tag and stderr prefix
 )
 
 func init() {
@@ -57,16 +57,6 @@ func init() {
 	}
 
 	Debugf("debug=%t", debug)
-}
-
-func setupSyslogWriter(tag string) error {
-	writer, err := syslog.New(syslog.LOG_INFO, tag)
-	if err != nil {
-		return err
-	}
-	// switch to new global writer only if no error
-	slog = writer
-	return nil
 }
 
 // SetComponentName adds a component name to syslog tag as "my-snap.<component>"
@@ -104,7 +94,7 @@ func Debugf(format string, a ...interface{}) {
 func Error(a ...interface{}) {
 	msg := fmt.Sprint(a...)
 	slog.Err(msg)
-	// print to stderr as well for snap command error output
+	// print to stderr as well so that snap command prints them on non-zero exit
 	stderr(a...)
 }
 
@@ -144,4 +134,14 @@ func stderr(a ...interface{}) {
 	// Standard errors get collected with "snapd" as syslog app.
 	// We add the tag as prefix to distinguish these from other snapd logs.
 	fmt.Fprintf(os.Stderr, tag+": %s\n", a...)
+}
+
+func setupSyslogWriter(tag string) error {
+	writer, err := syslog.New(syslog.LOG_INFO, tag)
+	if err != nil {
+		return err
+	}
+	// switch to new global writer only if no error
+	slog = writer
+	return nil
 }
