@@ -49,9 +49,48 @@ func main() {
 
 ```
 
-### Testing (WIP)
+### Testing
 The tests need to run in a snap environment:
 
+Build and install:
 ```bash
-snapcraft build
+snapcraft
+sudo snap install --dangerous ./edgex-snap-hooks_test_amd64.snap
+```
+
+The tests files are read relative to project source inside the snap.
+The `edgex-snap-hooks.test` command runs `go test -v --cover` internally and accepts
+all other go test arguments.
+
+Run all tests:
+```
+make test
+```
+
+Run top-level tests:
+```bash
+sudo edgex-snap-hooks.test
+```
+
+Run tests in one package, e.g. `snapctl`:
+```bash
+sudo edgex-snap-hooks.test ./snapctl
+```
+
+Run one unit test, e.g. `TestGet`:
+```bash
+sudo edgex-snap-hooks.test ./snapctl -run TestGet
+```
+
+#### Development
+```
+make try
+```
+
+You can now edit the files locally, copy them to prime directory, and re-run the
+tests without rebuilding the project. E.g.:
+
+```
+make sync
+sudo edgex-snap-hooks.test ./snapctl
 ```
