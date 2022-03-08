@@ -25,19 +25,16 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
-	"log/syslog"
 	"os"
 	"os/exec"
 	"regexp"
 	"strconv"
 	"strings"
+
+	"github.com/canonical/edgex-snap-hooks/v2/log"
 )
 
 var (
-	debug bool = false
-	log   *syslog.Writer
-	snap  string
-
 	// Snap contains the value of the SNAP environment variable.
 	Snap string
 	// SnapConf contains the expanded path '$SNAP/config'.
@@ -108,28 +105,24 @@ func CopyFileReplace(srcPath, destPath string, rStrings map[string]string) error
 	return nil
 }
 
-// Debug writes the given msg to sylog (sev=LOG_DEBUG) if the associated
-// global snap 'debug' configuration flag is set to 'true'.
+// Deprecated: use log.Debug or log.Debugf
 func Debug(msg string) {
-	if debug {
-		log.Debug(msg)
-	}
+	log.Debug(msg)
 }
 
-// Error writes the given msg to sylog (sev=LOG_ERROR).
+// Deprecated: use log.Error or log.Errorf
 func Error(msg string) {
-	fmt.Fprintf(os.Stderr, msg)
-	log.Err(msg)
+	log.Error(msg)
 }
 
-// Info writes the given msg to sylog (sev=LOG_INFO).
+// Deprecated: use log.Info or log.Infof
 func Info(msg string) {
 	log.Info(msg)
 }
 
-// Warn writes the given msg to sylog (sev=LOG_WARNING).
+// Deprecated: use log.Warn or log.Warnf
 func Warn(msg string) {
-	log.Err(msg)
+	log.Warn(msg)
 }
 
 // getEnvVars populates global variables for each of the SNAP*
@@ -171,31 +164,15 @@ func getEnvVars() error {
 	return nil
 }
 
-// Init creates a new syslog instance for the hook, sets the
-// global debug flag based on the value of the setDebug
-// parameter, and initializes global variables for the
-// commonly used SNAP_ environment variables.
+// Deprecated: init function is called on package import.
 func Init(setDebug bool, snapName string) error {
-	// set global variables
-	debug = setDebug
-	snap = snapName
-
-	var err error
-
-	if snap == "" {
-		return errors.New("snapName cannot be empty")
-	}
-
-	log, err = syslog.New(syslog.LOG_INFO, snap+":hook")
-	if err != nil {
-		return err
-	}
-
-	if err = getEnvVars(); err != nil {
-		return err
-	}
-
 	return nil
+}
+
+func init() {
+	if err := getEnvVars(); err != nil {
+		log.Stderr(err)
+	}
 }
 
 // NewSnapCtl returns a normal runtime client
@@ -743,7 +720,7 @@ func HandleEdgeXConfig(service, envJSON string, extraConf map[string]string) err
 	// The app-service-configurable snap is the one outlier snap that doesn't
 	// include the service name in it's configuration path.
 	var path string
-	if snap == "edgex-app-service-configurable" {
+	if SnapName == "edgex-app-service-configurable" {
 		path = fmt.Sprintf("%s/res/%s.env", SnapDataConf, service)
 	} else {
 		path = fmt.Sprintf("%s/%s/res/%s.env", SnapDataConf, service, service)
