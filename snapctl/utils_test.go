@@ -24,3 +24,12 @@ func getConfigStrictValue(t *testing.T, key string) string {
 		"Error getting config value via snapctl: %s", output)
 	return strings.TrimSpace(string(output))
 }
+
+func getServiceStatus(t *testing.T, service string) (enabled, active bool) {
+	output, err := exec.Command("snapctl", "services", service).CombinedOutput()
+	require.NoError(t, err,
+		"Error getting services via snapctl: %s", output)
+	enabled = strings.Contains(string(output), "enabled")
+	active = strings.Contains(string(output), "active")
+	return enabled, active
+}
