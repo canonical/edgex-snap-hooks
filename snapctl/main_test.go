@@ -30,6 +30,7 @@ func getServiceStatus(t *testing.T, service string) (enabled, active bool) {
 	require.NoError(t, err,
 		"Error getting services via snapctl: %s", output)
 	enabled = strings.Contains(string(output), "enabled")
-	active = strings.Contains(string(output), "active")
+	// look for not "inactive", because both active and inactive contain "active"
+	active = !strings.Contains(string(output), "inactive")
 	return enabled, active
 }
