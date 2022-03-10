@@ -20,44 +20,9 @@ import (
 	"fmt"
 	"log/syslog"
 	"os"
-
-	"github.com/canonical/edgex-snap-hooks/v2/snapctl"
 )
 
-var (
-	slog            *syslog.Writer
-	debug           bool
-	snapInstanceKey string // used as default syslog tag and tag prefix
-	tag             string // syslog tag and stderr prefix
-)
-
-func init() {
-	debug = (os.Getenv("DEBUG") == "true")
-	// snap config option overrides environment variable
-	if !debug {
-		snapctl.Unset("debug").Run()
-		value, err := snapctl.Get("debug").Run()
-		if err != nil {
-			stderr(err)
-			os.Exit(1)
-		}
-		debug = (value == "true")
-	}
-
-	snapInstanceKey = os.Getenv("SNAP_INSTANCE_NAME")
-	if snapInstanceKey == "" {
-		stderr("SNAP_INSTANCE_NAME environment variable not set.")
-		os.Exit(1)
-	}
-	tag = snapInstanceKey
-
-	if err := setupSyslogWriter(tag); err != nil {
-		stderr(err)
-		os.Exit(1)
-	}
-
-	Debugf("debug=%t", debug)
-}
+var slog *syslog.Writer
 
 // SetComponentName adds a component name to syslog tag as "my-snap.<component>"
 // The default tag is just "my-snap", read from the snap environment.
