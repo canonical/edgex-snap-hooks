@@ -26,7 +26,7 @@ import (
 
 func TestInitialize(t *testing.T) {
 
-	t.Run("debug", func(t *testing.T) {
+	t.Run("global debug value", func(t *testing.T) {
 		// should be false by default
 		require.False(t, debug)
 
