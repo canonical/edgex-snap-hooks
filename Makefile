@@ -7,4 +7,7 @@ sync:
 	cp -r $$(ls | egrep -v '^prime') prime/
 
 test:
-	sudo edgex-snap-hooks.test ./ ./snapctl
+	sudo edgex-snap-hooks.test \
+		./ \
+		./log \
+		./snapctl
