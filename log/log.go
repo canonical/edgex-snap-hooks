@@ -84,7 +84,7 @@ func Infof(format string, a ...interface{}) {
 // Warn writes the given input to syslog (sev=LOG_WARNING).
 // It formats similar to fmt.Sprint
 func Warn(a ...interface{}) {
-	slog.Err(fmt.Sprint(a...))
+	slog.Warning(fmt.Sprint(a...))
 }
 
 // Warnf writes the given input to syslog (sev=LOG_WARNING).
