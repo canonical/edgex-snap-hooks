@@ -18,23 +18,7 @@ package log
 
 import (
 	"testing"
-
-	"github.com/stretchr/testify/require"
 )
-
-func TestInit(t *testing.T) {
-	t.Run("global instance key", func(t *testing.T) {
-		require.NotEmpty(t, snapInstanceKey)
-	})
-
-	t.Run("global debug variable", func(t *testing.T) {
-		require.False(t, debug)
-	})
-
-	t.Run("global syslog writer", func(t *testing.T) {
-		require.NotNil(t, slog)
-	})
-}
 
 func TestSetComponentName(t *testing.T) {
 	SetComponentName("tester")

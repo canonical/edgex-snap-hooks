@@ -13,17 +13,16 @@ var (
 )
 
 func init() {
-	debug = (os.Getenv("DEBUG") == "true")
-	// snap config option overrides environment variable
-	if !debug {
-		snapctl.Unset("debug").Run()
-		value, err := snapctl.Get("debug").Run()
-		if err != nil {
-			stderr(err)
-			os.Exit(1)
-		}
-		debug = (value == "true")
+	initialize()
+}
+
+func initialize() {
+	value, err := snapctl.Get("debug").Run()
+	if err != nil {
+		stderr(err)
+		os.Exit(1)
 	}
+	debug = (value == "true")
 
 	snapInstanceKey = os.Getenv("SNAP_INSTANCE_NAME")
 	if snapInstanceKey == "" {
