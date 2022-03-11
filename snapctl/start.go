@@ -46,13 +46,13 @@ func Start(service ...string) (cmd start) {
 }
 
 // Enable sets the following command option:
-// --enable	Enable the specified services
+// --enable     Enable the specified services
 func (cmd start) Enable() start {
 	cmd.options = append(cmd.options, "--enable")
 	return cmd
 }
 
-// Run executes the get command
+// Run executes the start command
 func (cmd start) Run() error {
 	// validate all input
 	for _, validate := range cmd.validators {

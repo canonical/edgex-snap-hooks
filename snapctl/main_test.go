@@ -12,6 +12,12 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+const (
+	testSnapName = "edgex-snap-hooks"
+	mockService  = testSnapName + ".mock-service"
+	mockService2 = testSnapName + ".mock-service-2"
+)
+
 func setConfigValue(t *testing.T, key, value string) {
 	output, err := exec.Command("snapctl", "set", fmt.Sprintf("%s=%s", key, value)).CombinedOutput()
 	assert.NoError(t, err,
@@ -33,4 +39,30 @@ func getServiceStatus(t *testing.T, service string) (enabled, active bool) {
 	// look for not "inactive", because both active and inactive contain "active"
 	active = !strings.Contains(string(output), "inactive")
 	return enabled, active
+}
+
+func startService(t *testing.T, service string) {
+	output, err := exec.Command("snapctl", "start", service).CombinedOutput()
+	require.NoError(t, err,
+		"Error starting service via snapctl: %s", output)
+}
+
+func startAndEnableService(t *testing.T, service string) {
+	output, err := exec.Command("snapctl", "start", "--enable", service).CombinedOutput()
+	require.NoError(t, err,
+		"Error starting service via snapctl: %s", output)
+}
+
+func stopAndEnableAllServices(t *testing.T) {
+	startAndEnableService(t, testSnapName)
+}
+
+func stopAndDisableService(t *testing.T, service string) {
+	output, err := exec.Command("snapctl", "stop", "--disable", service).CombinedOutput()
+	require.NoError(t, err,
+		"Error stopping service via snapctl: %s", output)
+}
+
+func stopAndDisableAllServices(t *testing.T) {
+	stopAndDisableService(t, testSnapName)
 }

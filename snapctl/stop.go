@@ -46,13 +46,13 @@ func Stop(service ...string) (cmd stop) {
 }
 
 // Disable sets the following command option:
-// --disable	Disable the specified services
+// --disable    Disable the specified services
 func (cmd stop) Disable() stop {
 	cmd.options = append(cmd.options, "--disable")
 	return cmd
 }
 
-// Run executes the get command
+// Run executes the stop command
 func (cmd stop) Run() error {
 	// validate all input
 	for _, validate := range cmd.validators {
