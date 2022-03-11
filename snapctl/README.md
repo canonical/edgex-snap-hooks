@@ -18,3 +18,83 @@ Wrappers for following subcommands are implemented:
 - [x] `unset`: Remove configuration options
 
 The commands and descriptions are from `snapctl --help`.
+
+# Usage
+
+```go
+package main
+
+import (
+	"fmt"
+
+	"github.com/canonical/edgex-snap-hooks/v2/snapctl"
+)
+
+func main() {
+    // unset
+    err := snapctl.Unset("http").Run()
+	if err != nil {
+		panic(err)
+	}
+
+
+	// set values
+	err = snapctl.Set("http.bind-address", "0.0.0.0").Run()
+	if err != nil {
+		panic(err)
+	}
+	err = snapctl.Set("http.bind-port", "8080").Run()
+	if err != nil {
+		panic(err)
+	}
+
+	// set values with a JSON object
+	err = snapctl.Set("http.tls",
+		`{
+			"enabled":"true",
+			"cert":"./cert.pem",
+			"privkey":"./key.pem"
+		}`).Document().Run()
+	if err != nil {
+		panic(err)
+	}
+
+	// get one value
+	value, err := snapctl.Get("http.bind-port").Run()
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(value)
+	// Outputs:
+	// 8080
+
+    // get values as JSON object
+	value, err = snapctl.Get("http").Document().Run()
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(value)
+	// Outputs:
+	// {
+	//   "bind-address": "0.0.0.0",
+	//   "bind-port": 8080,
+	//   "tls": {
+	//     "cert": "./cert.pem",
+	// 	   "enabled": "true",
+	// 	   "privkey": "./key.pem"
+	//   }
+	// }
+
+    // start and enable a service
+    err := snapctl.Start("snap-name.service-name").Enable().Run()
+    if err != nil {
+		panic(err)
+	}
+
+    // start all services
+    err := snapctl.Start("snap.name").Run()
+    if err != nil {
+		panic(err)
+	}
+}
+```
