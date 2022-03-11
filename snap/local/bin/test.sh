@@ -10,7 +10,7 @@ export CGO_ENABLED=0
 echo "Change directory to $SNAP"
 cd $SNAP
 
-go test --cover "$@"
+go test -p 1 --cover "$@"
 echo "✅ go test"
 
 go vet "$@"
