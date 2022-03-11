@@ -31,12 +31,11 @@ import (
 )
 
 func main() {
-    // unset
-    err := snapctl.Unset("http").Run()
+	// unset
+	err := snapctl.Unset("http").Run()
 	if err != nil {
 		panic(err)
 	}
-
 
 	// set values
 	err = snapctl.Set("http.bind-address", "0.0.0.0").Run()
@@ -68,7 +67,7 @@ func main() {
 	// Outputs:
 	// 8080
 
-    // get values as JSON object
+	// get values as JSON object
 	value, err = snapctl.Get("http").Document().Run()
 	if err != nil {
 		panic(err)
@@ -85,15 +84,15 @@ func main() {
 	//   }
 	// }
 
-    // start and enable a service
-    err := snapctl.Start("snap-name.service-name").Enable().Run()
-    if err != nil {
+	// start and enable a service
+	err := snapctl.Start("snap-name.service-name").Enable().Run()
+	if err != nil {
 		panic(err)
 	}
 
-    // start all services
-    err := snapctl.Start("snap.name").Run()
-    if err != nil {
+	// start all services
+	err := snapctl.Start("snap.name").Run()
+	if err != nil {
 		panic(err)
 	}
 }
