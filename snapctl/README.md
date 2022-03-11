@@ -8,7 +8,7 @@ Wrappers for following subcommands are implemented:
 - [x] `get`: The get command prints configuration and interface connection settings.                
 - [ ] `is-connected`: Return success if the given plug or slot is connected, and failure otherwise   
 - [ ] `reboot`: Control the reboot behavior of the system          
-- [ ] `restart`: Restart services    
+- [x] `restart`: Restart services    
 - [x] `services`: Query the status of services      
 - [x] `set`: Changes configuration options
 - [ ] `set-health`: Report the health status of a snap
