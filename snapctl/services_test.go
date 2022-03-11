@@ -1,9 +1,10 @@
-package snapctl
+package snapctl_test
 
 import (
 	"reflect"
 	"testing"
 
+	"github.com/canonical/edgex-snap-hooks/v2/snapctl"
 	"github.com/stretchr/testify/require"
 )
 
@@ -11,7 +12,7 @@ func TestServices(t *testing.T) {
 
 	t.Run("snapctl services", func(t *testing.T) {
 		t.Run("one", func(t *testing.T) {
-			services, err := Services(mockService).Run()
+			services, err := snapctl.Services(mockService).Run()
 			require.NoError(t, err, "Error getting services.")
 			require.Len(t, services, 1)
 			serviceName := reflect.ValueOf(services).MapKeys()[0].String()
@@ -19,7 +20,7 @@ func TestServices(t *testing.T) {
 		})
 
 		t.Run("all", func(t *testing.T) {
-			services, err := Services().Run()
+			services, err := snapctl.Services().Run()
 			require.NoError(t, err, "Error getting services.")
 			require.Len(t, services, 2)
 			for k := range services {
@@ -31,7 +32,7 @@ func TestServices(t *testing.T) {
 			startAndEnableService(t, mockService)
 			t.Cleanup(func() { stopAndDisableService(t, mockService) })
 
-			services, err := Services(mockService).Run()
+			services, err := snapctl.Services(mockService).Run()
 			require.NoError(t, err, "Error getting services.")
 			require.Len(t, services, 1)
 			v, found := services[mockService]
@@ -41,7 +42,7 @@ func TestServices(t *testing.T) {
 		})
 
 		t.Run("disabled and inactive", func(t *testing.T) {
-			services, err := Services(mockService2).Run()
+			services, err := snapctl.Services(mockService2).Run()
 			require.NoError(t, err, "Error getting services.")
 			require.Len(t, services, 1)
 			v, found := services[mockService2]
@@ -51,12 +52,12 @@ func TestServices(t *testing.T) {
 		})
 
 		t.Run("service not found", func(t *testing.T) {
-			_, err := Services("non-existed").Run()
+			_, err := snapctl.Services("non-existed").Run()
 			require.Error(t, err)
 		})
 
 		t.Run("reject service name with space", func(t *testing.T) {
-			_, err := Services("bad name").Run()
+			_, err := snapctl.Services("bad name").Run()
 			require.Error(t, err)
 		})
 

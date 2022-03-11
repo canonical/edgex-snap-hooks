@@ -1,4 +1,4 @@
-package snapctl
+package snapctl_test
 
 import "testing"
 

@@ -1,10 +1,11 @@
-package snapctl
+package snapctl_test
 
 import (
 	"bytes"
 	"encoding/json"
 	"testing"
 
+	"github.com/canonical/edgex-snap-hooks/v2/snapctl"
 	"github.com/stretchr/testify/require"
 )
 
@@ -16,7 +17,7 @@ func TestGet(t *testing.T) {
 
 	t.Run("snapctl get", func(t *testing.T) {
 		t.Run("one", func(t *testing.T) {
-			retrievedValue, err := Get(testKey).Run()
+			retrievedValue, err := snapctl.Get(testKey).Run()
 			require.NoError(t, err, "Error getting config.")
 			require.Equal(t, testValue, retrievedValue)
 		})
@@ -26,13 +27,13 @@ func TestGet(t *testing.T) {
 		})
 
 		t.Run("reject key with space", func(t *testing.T) {
-			_, err := Get("bad key").Run()
+			_, err := snapctl.Get("bad key").Run()
 			require.Error(t, err)
 		})
 	})
 
 	t.Run("snapctl get -d", func(t *testing.T) {
-		retrievedValue, err := Get(testKey).Document().Run()
+		retrievedValue, err := snapctl.Get(testKey).Document().Run()
 		require.NoError(t, err, "Error getting config as document.")
 		compact := new(bytes.Buffer)
 		err = json.Compact(compact, []byte(retrievedValue))
@@ -42,13 +43,13 @@ func TestGet(t *testing.T) {
 
 	t.Run("snapctl get -t", func(t *testing.T) {
 		t.Run("string", func(t *testing.T) {
-			retrievedValue, err := Get(testKey).Strict().Run()
+			retrievedValue, err := snapctl.Get(testKey).Strict().Run()
 			require.NoError(t, err, "Error getting config.")
 			require.Equal(t, `"test-value"`, retrievedValue)
 		})
 
 		t.Run("null", func(t *testing.T) {
-			retrievedValue, err := Get("some-other-key").Strict().Run()
+			retrievedValue, err := snapctl.Get("some-other-key").Strict().Run()
 			require.NoError(t, err, "Error getting config.")
 			require.Equal(t, "null", retrievedValue)
 		})
@@ -61,7 +62,7 @@ func TestGet(t *testing.T) {
 		})
 
 		t.Run("prefix with colon", func(t *testing.T) {
-			_, err := Get().Interface(":test-plug").Run()
+			_, err := snapctl.Get().Interface(":test-plug").Run()
 			require.Error(t, err, "interface has colon as prefix")
 		})
 	})

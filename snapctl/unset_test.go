@@ -1,8 +1,9 @@
-package snapctl
+package snapctl_test
 
 import (
 	"testing"
 
+	"github.com/canonical/edgex-snap-hooks/v2/snapctl"
 	"github.com/stretchr/testify/require"
 )
 
@@ -18,7 +19,7 @@ func TestUnset(t *testing.T) {
 			setConfigValue(t, testKey, testValue)
 			require.Equal(t, `"test-value"`, getConfigStrictValue(t, testKey))
 
-			err := Unset(testKey).Run()
+			err := snapctl.Unset(testKey).Run()
 			require.NoError(t, err)
 			require.Equal(t, `null`, getConfigStrictValue(t, testKey))
 		})
@@ -31,14 +32,14 @@ func TestUnset(t *testing.T) {
 			setConfigValue(t, testKey2, testValue)
 			require.Equal(t, `"test-value"`, getConfigStrictValue(t, testKey2))
 
-			err := Unset(testKey, testKey2).Run()
+			err := snapctl.Unset(testKey, testKey2).Run()
 			require.NoError(t, err)
 			require.Equal(t, `null`, getConfigStrictValue(t, testKey))
 			require.Equal(t, `null`, getConfigStrictValue(t, testKey2))
 		})
 
 		t.Run("reject key with space", func(t *testing.T) {
-			err := Unset("bad key").Run()
+			err := snapctl.Unset("bad key").Run()
 			require.Error(t, err)
 		})
 	})

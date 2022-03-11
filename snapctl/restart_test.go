@@ -1,8 +1,9 @@
-package snapctl
+package snapctl_test
 
 import (
 	"testing"
 
+	"github.com/canonical/edgex-snap-hooks/v2/snapctl"
 	"github.com/stretchr/testify/require"
 )
 
@@ -14,7 +15,7 @@ func TestRestart(t *testing.T) {
 		t.Run("one", func(t *testing.T) {
 			t.Cleanup(func() { stopAndDisableAllServices(t) })
 
-			err := Restart(mockService).Run()
+			err := snapctl.Restart(mockService).Run()
 			require.NoError(t, err)
 			_, active := getServiceStatus(t, mockService)
 			require.True(t, active, "active")
@@ -23,7 +24,7 @@ func TestRestart(t *testing.T) {
 		t.Run("multiple", func(t *testing.T) {
 			t.Cleanup(func() { stopAndDisableAllServices(t) })
 
-			err := Restart(mockService, mockService2).Run()
+			err := snapctl.Restart(mockService, mockService2).Run()
 			require.NoError(t, err)
 			_, active := getServiceStatus(t, mockService)
 			require.True(t, active, "active")
@@ -37,7 +38,7 @@ func TestRestart(t *testing.T) {
 	})
 
 	t.Run("reject name with space", func(t *testing.T) {
-		err := Restart("bad name").Run()
+		err := snapctl.Restart("bad name").Run()
 		require.Error(t, err)
 	})
 }

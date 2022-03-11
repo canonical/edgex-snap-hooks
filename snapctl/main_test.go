@@ -1,6 +1,6 @@
 // Utility testing functions
 
-package snapctl
+package snapctl_test
 
 import (
 	"fmt"
@@ -13,9 +13,9 @@ import (
 )
 
 const (
-	testSnapName = "edgex-snap-hooks"
-	mockService  = testSnapName + ".mock-service"
-	mockService2 = testSnapName + ".mock-service-2"
+	snapName     = "edgex-snap-hooks"
+	mockService  = snapName + ".mock-service"
+	mockService2 = snapName + ".mock-service-2"
 )
 
 func setConfigValue(t *testing.T, key, value string) {
@@ -54,7 +54,7 @@ func startAndEnableService(t *testing.T, service string) {
 }
 
 func stopAndEnableAllServices(t *testing.T) {
-	startAndEnableService(t, testSnapName)
+	startAndEnableService(t, snapName)
 }
 
 func stopAndDisableService(t *testing.T, service string) {
@@ -64,5 +64,5 @@ func stopAndDisableService(t *testing.T, service string) {
 }
 
 func stopAndDisableAllServices(t *testing.T) {
-	stopAndDisableService(t, testSnapName)
+	stopAndDisableService(t, snapName)
 }
