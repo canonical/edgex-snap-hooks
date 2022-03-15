@@ -19,67 +19,100 @@
 package options
 
 import (
-	"os"
+	"encoding/json"
 
 	"github.com/canonical/edgex-snap-hooks/v2/log"
 	"github.com/canonical/edgex-snap-hooks/v2/snapctl"
 )
 
-/*
-	https://warthogs.atlassian.net/browse/EDGEX-133
-	This task is to create a package which implements the behaviour described in EDGEX-78: Decide on config option schema for setting environment variablesIN REVIEW .
-
- 	The package would be responsible for reading the config options and writing the environment variables in env files. It would be a sub-package under GitHub - canonical/edgex-snap-hooks: Snap hooks library for EdgeX snaps.
-
-	It may also need to start/stop services when corresponding options are changed.
-
-	https://warthogs.atlassian.net/browse/EDGEX-78
-
-	The schema agreed on is:
-	apps.<app>.<ENV_KEY> -> setting env variable for an app
-	apps.<app>.<option> -> setting another option for CLI executation or CLI arg override
-	apps.<app>.auto-start (boolean) -> turn auto start on/off by seting to true/false
-	<ENV_KEY> -> setting env variable for all apps (e.g. DEBUG=true, SERVICE_SERVERBINDADDRESS=0.0.0.0)
-
-	Deprecation:
-		<env>.<app>.<env-key> → can be done with env injection
-		<app> → can be done with auto-start option
-		startup-duration, startup-interval → can be done with env injection
-
-*/
-
-func processDeprecatedSettings(json string) error {
-
-	log.Infof("Processing deprecated settings: %s", json)
-
-	return nil
+type SnapOptions struct {
+	Apps   map[string]map[string]map[string]interface{} `json:"apps"`
+	Config map[string]interface{}                       `json:"config"`
 }
 
-func ProcessOptions() error {
+func getConfigMap(config map[string]interface{}) (map[string]string, error) {
+	result := make(map[string]string)
 
-	log.Info("Processing options")
+	for env, value := range config {
+		if err := flattenConfigJSON("", env, value, result); err != nil {
+			return nil, err
+		}
+	}
+	return result, nil
+}
 
-	appsJSON, err := snapctl.Get("apps").Run()
+func ProcessOptions(services []string) error {
+	var options SnapOptions
+
+	//Schema (4): 	config.<my.env.var> -> setting env variable for all apps (e.g. DEBUG=true, SERVICE_SERVERBINDADDRESS=0.0.0.0)
+
+	jsonString, err := snapctl.Get("config").Document().Run()
 	if err != nil {
-		log.Errorf("Reading config 'apps' failed: %v", err)
-		os.Exit(1)
+		return err
+	}
+	err = json.Unmarshal([]byte(jsonString), &options)
+	if err != nil {
+		return err
+	}
+	configuration, err := getConfigMap(options.Config)
+	if err != nil {
+		return err
 	}
 
-	if err = processAppSettings(appsJSON); err != nil {
-		log.Errorf("Processing apps config failed: %v", err)
-		os.Exit(1)
+	for _, service := range services {
+		overrides := getEnvVarFile(service)
+		for env, value := range configuration {
+			overrides.setEnvVariable(env, value)
+		}
+		overrides.writeEnvFile(false)
 	}
 
-	/*	envJSON, err := snapctl.Get("env").Run()
-		if err != nil {
-			log.Error("Reading config 'env' failed: %v", err)
-			os.Exit(1)
-		}
+	//Schema (1): apps.<app>.config.<my.env.var> -> setting env var MY_ENV_VAR for an app
 
-		if err := processDeprecatedSettings(envJSON); err != nil {
-			return err
+	// get the 'apps' json structure
+	jsonString, err = snapctl.Get("apps").Document().Run()
+	if err != nil {
+		return err
+	}
+	err = json.Unmarshal([]byte(jsonString), &options)
+	if err != nil {
+		return err
+	}
+
+	// iterate through the known services in this snap
+	for _, service := range services {
+		log.Infof("Processing service:%s", service)
+
+		// get the configuration specified for each service
+		// and create the environment override file
+		appConfig := options.Apps[service]
+		log.Infof("Processing appConfig:%v", appConfig)
+		if appConfig != nil {
+			config := appConfig["config"]
+			log.Infof("Processing config:%v", config)
+			if config != nil {
+				configuration, err := getConfigMap(config)
+
+				log.Infof("Processing configuration:%v", configuration)
+				if err != nil {
+					return err
+				}
+				overrides := getEnvVarFile(service)
+
+				log.Infof("Processing overrides:%v", overrides)
+				for env, value := range configuration {
+					log.Infof("Processing overrides setEnvVariable:%v %v", env, value)
+					overrides.setEnvVariable(env, value)
+				}
+				overrides.writeEnvFile(true)
+			}
 		}
-	*/
+	}
+
+	// apps.<app>.<other-option.child> -> setting another option for CLI executation or CLI arg override
+
+	// apps.<app>.auto-start (boolean) -> turn auto start on/off by seting to true/false
+
 	return nil
 
 }

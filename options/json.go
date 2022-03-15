@@ -19,35 +19,9 @@
 package options
 
 import (
-	"encoding/json"
 	"fmt"
 	"strconv"
 )
-
-func unmarshal(envJSON string) (map[string]interface{}, error) {
-	if envJSON == "" {
-		return nil, nil
-	}
-
-	var m map[string]interface{}
-	err := json.Unmarshal([]byte(envJSON), &m)
-	if err != nil {
-		return nil, fmt.Errorf("failed to unmarshall EdgeX config - %v : %v", envJSON, err)
-	}
-
-	return m, nil
-
-}
-
-func getServiceSettingMap(config interface{}) (map[string]string, error) {
-	result := make(map[string]string)
-
-	if err := flattenConfigJSON("", "", config, result); err != nil {
-		return nil, err
-	}
-
-	return result, nil
-}
 
 // p is the current prefix of the config key being processed (e.g. "service", "security.auth")
 // k is the key name of the current JSON object being processed
