@@ -25,9 +25,9 @@ import (
 	"github.com/canonical/edgex-snap-hooks/v2/snapctl"
 )
 
-type SnapOptions struct {
-	Apps   map[string]map[string]map[string]interface{} `json:"apps"`
-	Config map[string]interface{}                       `json:"config"`
+type snapOptions struct {
+	apps   map[string]map[string]map[string]interface{} `json:"apps"`
+	config map[string]interface{}                       `json:"config"`
 }
 
 func getConfigMap(config map[string]interface{}) (map[string]string, error) {
@@ -41,10 +41,10 @@ func getConfigMap(config map[string]interface{}) (map[string]string, error) {
 	return result, nil
 }
 
-func ProcessOptions(services []string) error {
-	var options SnapOptions
-
-	//Schema (4): 	config.<my.env.var> -> setting env variable for all apps (e.g. DEBUG=true, SERVICE_SERVERBINDADDRESS=0.0.0.0)
+// Process the "config.<my.env.var>" configuration
+//	 -> setting env variable for all apps (e.g. DEBUG=true, SERVICE_SERVERBINDADDRESS=0.0.0.0)
+func processGlobalConfigOptions(services []string) error {
+	var options snapOptions
 
 	jsonString, err := snapctl.Get("config").Document().Run()
 	if err != nil {
@@ -54,11 +54,10 @@ func ProcessOptions(services []string) error {
 	if err != nil {
 		return err
 	}
-	configuration, err := getConfigMap(options.Config)
+	configuration, err := getConfigMap(options.config)
 	if err != nil {
 		return err
 	}
-
 	for _, service := range services {
 		overrides := getEnvVarFile(service)
 		for env, value := range configuration {
@@ -66,11 +65,16 @@ func ProcessOptions(services []string) error {
 		}
 		overrides.writeEnvFile(false)
 	}
+	return nil
+}
 
-	//Schema (1): apps.<app>.config.<my.env.var> -> setting env var MY_ENV_VAR for an app
+// Process the "apps.<app>.config.<my.env.var>" configuration
+//	-> setting env var MY_ENV_VAR for an app
+func processAppConfigOptions(services []string) error {
+	var options snapOptions
 
 	// get the 'apps' json structure
-	jsonString, err = snapctl.Get("apps").Document().Run()
+	jsonString, err := snapctl.Get("apps").Document().Run()
 	if err != nil {
 		return err
 	}
@@ -78,14 +82,13 @@ func ProcessOptions(services []string) error {
 	if err != nil {
 		return err
 	}
-
 	// iterate through the known services in this snap
 	for _, service := range services {
 		log.Infof("Processing service:%s", service)
 
 		// get the configuration specified for each service
 		// and create the environment override file
-		appConfig := options.Apps[service]
+		appConfig := options.apps[service]
 		log.Infof("Processing appConfig:%v", appConfig)
 		if appConfig != nil {
 			config := appConfig["config"]
@@ -108,10 +111,18 @@ func ProcessOptions(services []string) error {
 			}
 		}
 	}
+	return nil
+}
 
-	// apps.<app>.<other-option.child> -> setting another option for CLI executation or CLI arg override
+func ProcessOptions(services []string) error {
 
-	// apps.<app>.auto-start (boolean) -> turn auto start on/off by seting to true/false
+	if err := processGlobalConfigOptions(services); err != nil {
+		return err
+	}
+
+	if err := processAppConfigOptions(services); err != nil {
+		return err
+	}
 
 	return nil
 
