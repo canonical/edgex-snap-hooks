@@ -10,4 +10,6 @@ test:
 	sudo edgex-snap-hooks.test \
 		./ \
 		./log \
-		./snapctl
+		./snapctl \
+		./env \
+		./options
