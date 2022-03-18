@@ -11,6 +11,10 @@ go get github.com/canonical/edgex-snap-hooks/v2
 ```
 Please refer to [go get docs](https://pkg.go.dev/cmd/go#hdr-Add_dependencies_to_current_module_and_install_them) for details.
 
+The [`jakarta`](https://github.com/canonical/edgex-snap-hooks/tree/jakarta) branch is split from master as of `v2.1.3`.
+It would only receive patch updates but no minor or major releases.
+The jakarta-only tags follow `v2.1.X+jakarta` scheme, where `X` is greater than 3.
+
 #### Example
 
 ```go
