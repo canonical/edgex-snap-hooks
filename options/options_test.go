@@ -47,7 +47,9 @@ func TestOptionsSet(t *testing.T) {
 	snapSet(t, "apps."+TEST_SERVICE+".config.app.key.value", "value02")
 	snapSet(t, "apps."+TEST_SERVICE2+".config.app.key.value", "value03")
 
-	require.NoError(t, ProcessOptions([]string{TEST_SERVICE, TEST_SERVICE2}), "Error setting options.")
+	require.Error(t, ProcessOptions(), "Should not accept empty service list")
+
+	require.NoError(t, ProcessOptions(TEST_SERVICE, TEST_SERVICE2), "Error setting options.")
 	require.NoError(t, isInFile(configFile, "export KEY_VALUE=value01"), "Error validating .env file")
 	require.NoError(t, isInFile(configFile, "export APP_KEY_VALUE=value02"), "Error validating .env file")
 

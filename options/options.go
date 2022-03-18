@@ -20,6 +20,7 @@ package options
 
 import (
 	"encoding/json"
+	"fmt"
 
 	"github.com/canonical/edgex-snap-hooks/v2/log"
 	"github.com/canonical/edgex-snap-hooks/v2/snapctl"
@@ -114,7 +115,11 @@ func processAppConfigOptions(services []string) error {
 	return nil
 }
 
-func ProcessOptions(services []string) error {
+func ProcessOptions(services ...string) error {
+
+	if len(services) == 0 {
+		return fmt.Errorf("empty service list")
+	}
 
 	if err := processGlobalConfigOptions(services); err != nil {
 		return err
