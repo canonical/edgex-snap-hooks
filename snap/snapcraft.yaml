@@ -15,13 +15,11 @@ apps:
     plugs: [network, home]
 
   # Mocked apps needed for testing
-  mock-service:
-    command: snap/local/bin/mock-app.sh
-    daemon: simple
-  mock-service-disabled:
+  mock-service: &ms
     command: snap/local/bin/mock-app.sh
     daemon: simple
     install-mode: disable
+  mock-service-2: *ms
 
 
 parts:
