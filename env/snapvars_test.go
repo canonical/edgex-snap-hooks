@@ -25,8 +25,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-// TODO: add more tests (see trello: )
-
 func TestEnvVars(t *testing.T) {
 	// Arrange
 	os.Setenv(snapEnv, "/snap/testsnap/x1")

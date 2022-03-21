@@ -115,6 +115,16 @@ func processAppConfigOptions(services []string) error {
 	return nil
 }
 
+// ProcessOptions processes snap configuration which can be used to override
+// edgexfoundry configuration via environment variables sourced by the snap
+// service wrapper script.
+// A service specific file (named <service>.env) is created in  the
+// $SNAP_DATA/config/res directory.
+// The settings can either be app-specific or apply to all services/apps in the snap
+// a) snap set edgex-snap-name apps.<app>.config.<my.env.var>
+//	-> sets env var MY_ENV_VAR for an app
+// b) snap set edgex-snap-name config.<my.env.var>
+//	-> sets env variable for all apps (e.g. DEBUG=true, SERVICE_SERVERBINDADDRESS=0.0.0.0)
 func ProcessOptions(services ...string) error {
 
 	if len(services) == 0 {
