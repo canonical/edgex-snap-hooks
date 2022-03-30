@@ -55,6 +55,12 @@ func processGlobalConfigOptions(services []string) error {
 	if err != nil {
 		return err
 	}
+
+	if options.Config == nil {
+		log.Debugf("No global configuration settings")
+		return nil
+	}
+
 	configuration, err := getConfigMap(options.Config)
 	if err != nil {
 		return err
@@ -85,27 +91,27 @@ func processAppConfigOptions(services []string) error {
 	}
 	// iterate through the known services in this snap
 	for _, service := range services {
-		log.Infof("Processing service:%s", service)
+		log.Debugf("Processing service:%s", service)
 
 		// get the configuration specified for each service
 		// and create the environment override file
 		appConfig := options.Apps[service]
-		log.Infof("Processing appConfig:%v", appConfig)
+		log.Debugf("Processing appConfig:%v", appConfig)
 		if appConfig != nil {
 			config := appConfig["config"]
-			log.Infof("Processing config:%v", config)
+			log.Debugf("Processing config:%v", config)
 			if config != nil {
 				configuration, err := getConfigMap(config)
 
-				log.Infof("Processing configuration:%v", configuration)
+				log.Debugf("Processing configuration:%v", configuration)
 				if err != nil {
 					return err
 				}
 				overrides := getEnvVarFile(service)
 
-				log.Infof("Processing overrides:%v", overrides)
+				log.Debugf("Processing overrides:%v", overrides)
 				for env, value := range configuration {
-					log.Infof("Processing overrides setEnvVariable:%v %v", env, value)
+					log.Debugf("Processing overrides setEnvVariable:%v %v", env, value)
 					overrides.setEnvVariable(env, value)
 				}
 				overrides.writeEnvFile(true)
