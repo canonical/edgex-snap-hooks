@@ -55,6 +55,12 @@ func processGlobalConfigOptions(services []string) error {
 	if err != nil {
 		return err
 	}
+
+	if options.Config == nil {
+		log.Debugf("No global configuration settings")
+		return nil
+	}
+
 	configuration, err := getConfigMap(options.Config)
 	if err != nil {
 		return err
@@ -64,7 +70,7 @@ func processGlobalConfigOptions(services []string) error {
 		for env, value := range configuration {
 			overrides.setEnvVariable(env, value)
 		}
-		overrides.writeEnvFile(false)
+		overrides.writeEnvFile(true)
 	}
 	return nil
 }
@@ -85,27 +91,27 @@ func processAppConfigOptions(services []string) error {
 	}
 	// iterate through the known services in this snap
 	for _, service := range services {
-		log.Infof("Processing service:%s", service)
+		log.Debugf("Processing service:%s", service)
 
 		// get the configuration specified for each service
 		// and create the environment override file
 		appConfig := options.Apps[service]
-		log.Infof("Processing appConfig:%v", appConfig)
+		log.Debugf("Processing appConfig:%v", appConfig)
 		if appConfig != nil {
 			config := appConfig["config"]
-			log.Infof("Processing config:%v", config)
+			log.Debugf("Processing config:%v", config)
 			if config != nil {
 				configuration, err := getConfigMap(config)
 
-				log.Infof("Processing configuration:%v", configuration)
+				log.Debugf("Processing configuration:%v", configuration)
 				if err != nil {
 					return err
 				}
 				overrides := getEnvVarFile(service)
 
-				log.Infof("Processing overrides:%v", overrides)
+				log.Debugf("Processing overrides:%v", overrides)
 				for env, value := range configuration {
-					log.Infof("Processing overrides setEnvVariable:%v %v", env, value)
+					log.Debugf("Processing overrides setEnvVariable:%v %v", env, value)
 					overrides.setEnvVariable(env, value)
 				}
 				overrides.writeEnvFile(true)
@@ -115,7 +121,7 @@ func processAppConfigOptions(services []string) error {
 	return nil
 }
 
-// ProcessOptions processes snap configuration which can be used to override
+// ProcessAppConfig processes snap configuration which can be used to override
 // edgexfoundry configuration via environment variables sourced by the snap
 // service wrapper script.
 // A service specific file (named <service>.env) is created in  the
@@ -125,7 +131,7 @@ func processAppConfigOptions(services []string) error {
 //	-> sets env var MY_ENV_VAR for an app
 // b) snap set edgex-snap-name config.<my.env.var>
 //	-> sets env variable for all apps (e.g. DEBUG=true, SERVICE_SERVERBINDADDRESS=0.0.0.0)
-func ProcessOptions(services ...string) error {
+func ProcessAppConfig(services ...string) error {
 
 	if len(services) == 0 {
 		return fmt.Errorf("empty service list")
