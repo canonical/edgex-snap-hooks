@@ -70,7 +70,7 @@ func processGlobalConfigOptions(services []string) error {
 		for env, value := range configuration {
 			overrides.setEnvVariable(env, value)
 		}
-		overrides.writeEnvFile(false)
+		overrides.writeEnvFile(true)
 	}
 	return nil
 }
@@ -121,7 +121,7 @@ func processAppConfigOptions(services []string) error {
 	return nil
 }
 
-// ProcessOptions processes snap configuration which can be used to override
+// ProcessAppConfig processes snap configuration which can be used to override
 // edgexfoundry configuration via environment variables sourced by the snap
 // service wrapper script.
 // A service specific file (named <service>.env) is created in  the
@@ -131,7 +131,7 @@ func processAppConfigOptions(services []string) error {
 //	-> sets env var MY_ENV_VAR for an app
 // b) snap set edgex-snap-name config.<my.env.var>
 //	-> sets env variable for all apps (e.g. DEBUG=true, SERVICE_SERVERBINDADDRESS=0.0.0.0)
-func ProcessOptions(services ...string) error {
+func ProcessAppConfig(services ...string) error {
 
 	if len(services) == 0 {
 		return fmt.Errorf("empty service list")
