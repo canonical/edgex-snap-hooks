@@ -29,6 +29,7 @@ import (
 	"github.com/canonical/edgex-snap-hooks/v2/env"
 	"github.com/canonical/edgex-snap-hooks/v2/options"
 	"github.com/canonical/edgex-snap-hooks/v2/snapctl"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -48,9 +49,9 @@ func TestProcessAppConfig(t *testing.T) {
 	os.MkdirAll(configDir2, os.ModePerm)
 
 	t.Cleanup(func() {
-		require.NoError(t, snapctl.Unset("apps", "config", "env").Run())
-		os.RemoveAll(configDir)
-		os.RemoveAll(configDir2)
+		assert.NoError(t, snapctl.Unset("apps", "config", "env").Run())
+		assert.NoError(t, os.RemoveAll(configDir))
+		assert.NoError(t, os.RemoveAll(configDir2))
 	})
 
 	t.Run("reject empty service list", func(t *testing.T) {
@@ -61,10 +62,10 @@ func TestProcessAppConfig(t *testing.T) {
 		const key, value = "config.x.y", "value"
 
 		t.Cleanup(func() {
-			require.NoError(t, snapctl.Unset(key).Run())
+			assert.NoError(t, snapctl.Unset(key).Run())
 
-			require.NoError(t, os.RemoveAll(envFile))
-			require.NoError(t, os.RemoveAll(envFile2))
+			assert.NoError(t, os.RemoveAll(envFile))
+			assert.NoError(t, os.RemoveAll(envFile2))
 		})
 
 		t.Run("set", func(t *testing.T) {
@@ -74,9 +75,9 @@ func TestProcessAppConfig(t *testing.T) {
 
 			// both env files should have it
 			require.NoError(t, isInFile(envFile, "export X_Y=value"),
-				"File content:\n%s", catFile(envFile))
+				"File content:\n%s", readFile(envFile))
 			require.NoError(t, isInFile(envFile2, "export X_Y=value"),
-				"File content:\n%s", catFile(envFile2))
+				"File content:\n%s", readFile(envFile2))
 		})
 
 		t.Run("unset", func(t *testing.T) {
@@ -86,9 +87,9 @@ func TestProcessAppConfig(t *testing.T) {
 
 			// it should be removed from both env files
 			require.Error(t, isInFile(envFile, "export X_Y=value"),
-				"File content:\n%s", catFile(envFile))
+				"File content:\n%s", readFile(envFile))
 			require.Error(t, isInFile(envFile2, "export X_Y=value"),
-				"File content:\n%s", catFile(envFile2))
+				"File content:\n%s", readFile(envFile2))
 		})
 	})
 
@@ -96,8 +97,8 @@ func TestProcessAppConfig(t *testing.T) {
 		const key, value = "apps." + testService + ".config.x.y", "value"
 
 		t.Cleanup(func() {
-			require.NoError(t, snapctl.Unset(key).Run())
-			require.NoError(t, os.RemoveAll(envFile))
+			assert.NoError(t, snapctl.Unset(key).Run())
+			assert.NoError(t, os.RemoveAll(envFile))
 		})
 
 		t.Run("set", func(t *testing.T) {
@@ -107,11 +108,11 @@ func TestProcessAppConfig(t *testing.T) {
 
 			// first env file should have it
 			require.NoError(t, isInFile(envFile, "export X_Y=value"),
-				"File content:\n%s", catFile(envFile))
+				"File content:\n%s", readFile(envFile))
 
 			// second env file should NOT have it
 			require.Error(t, isInFile(envFile2, "export X_Y=value"),
-				"File content:\n%s", catFile(envFile2))
+				"File content:\n%s", readFile(envFile2))
 		})
 
 		t.Run("unset", func(t *testing.T) {
@@ -121,7 +122,7 @@ func TestProcessAppConfig(t *testing.T) {
 
 			// it should be removed from the env file
 			require.Error(t, isInFile(envFile, "export X_Y=value"),
-				"File content:\n%s", catFile(envFile))
+				"File content:\n%s", readFile(envFile))
 		})
 	})
 
@@ -131,11 +132,16 @@ func TestProcessAppConfig(t *testing.T) {
 			key, value             = "apps.core-data.config.x.y", "value"
 		)
 
-		t.Cleanup(func() {
-			require.NoError(t, snapctl.Unset(legacyKey).Run())
-			require.NoError(t, snapctl.Unset(key).Run())
+		configCoreDataDir := fmt.Sprintf("%s/core-data/res/", env.SnapDataConf)
+		// envFileCoreData := path.Join(configCoreDataDir, "core-data.env")
+		os.MkdirAll(configCoreDataDir, os.ModePerm)
 
-			require.NoError(t, os.RemoveAll(envFile))
+		t.Cleanup(func() {
+			assert.NoError(t, snapctl.Unset(legacyKey).Run())
+			assert.NoError(t, snapctl.Unset(key).Run())
+
+			assert.NoError(t, os.RemoveAll(envFile))
+			assert.NoError(t, os.RemoveAll(configDir2))
 		})
 
 		t.Run("set", func(t *testing.T) {
@@ -165,13 +171,11 @@ func isInFile(file string, line string) error {
 	}
 }
 
-func catFile(file string) string {
-	// read the whole file at once
+func readFile(file string) string {
 	b, err := os.ReadFile(file)
 	if err != nil {
 		panic(err)
 	}
-
 	return string(b)
 }
 
