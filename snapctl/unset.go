@@ -33,8 +33,8 @@ type unset struct {
 
 // Unset removes config options
 // It takes one or more keys as input
-func Unset(keyValue ...string) (cmd unset) {
-	cmd.keys = keyValue
+func Unset(keys ...string) (cmd unset) {
+	cmd.keys = keys
 
 	cmd.validators = append(cmd.validators, func() error {
 		for _, key := range cmd.keys {
