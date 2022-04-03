@@ -70,7 +70,7 @@ func processGlobalConfigOptions(services []string) error {
 		for env, value := range configuration {
 			overrides.setEnvVariable(env, value)
 		}
-		overrides.writeEnvFile(true)
+		overrides.writeEnvFile(false)
 	}
 	return nil
 }
@@ -132,6 +132,14 @@ func processAppConfigOptions(services []string) error {
 // b) snap set edgex-snap-name config.<my.env.var>
 //	-> sets env variable for all apps (e.g. DEBUG=true, SERVICE_SERVERBINDADDRESS=0.0.0.0)
 func ProcessAppConfig(services ...string) error {
+
+	legacyOptions, err := snapctl.Get("env").Run()
+	if err != nil {
+		return err
+	}
+	if legacyOptions != "" {
+		return fmt.Errorf("Legacy 'env.' options must not be mixed with the new 'config.' and 'app.' options")
+	}
 
 	if len(services) == 0 {
 		return fmt.Errorf("empty service list")

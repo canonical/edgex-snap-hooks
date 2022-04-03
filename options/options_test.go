@@ -16,58 +16,144 @@
  * SPDX-License-Identifier: Apache-2.0'
  */
 
-package options
+package options_test
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
-	"os/exec"
 	"path"
 	"strings"
 	"testing"
 
+	hooks "github.com/canonical/edgex-snap-hooks/v2"
 	"github.com/canonical/edgex-snap-hooks/v2/env"
+	"github.com/canonical/edgex-snap-hooks/v2/options"
+	"github.com/canonical/edgex-snap-hooks/v2/snapctl"
 	"github.com/stretchr/testify/require"
 )
 
-const TEST_SERVICE = "configure-test"
-const TEST_SERVICE2 = "configure-test2"
+const (
+	testService  = "test-service"
+	testService2 = "test-service2"
+)
 
-func TestOptionsSet(t *testing.T) {
+func TestProcessAppConfig(t *testing.T) {
 
-	configDir := fmt.Sprintf("%s/%s/res/", env.SnapDataConf, TEST_SERVICE)
-	configFile := path.Join(configDir, TEST_SERVICE+".env")
+	configDir := fmt.Sprintf("%s/%s/res/", env.SnapDataConf, testService)
+	envFile := path.Join(configDir, testService+".env")
 	os.MkdirAll(configDir, os.ModePerm)
-	config2Dir := fmt.Sprintf("%s/%s/res/", env.SnapDataConf, TEST_SERVICE2)
-	config2File := path.Join(config2Dir, TEST_SERVICE2+".env")
-	os.MkdirAll(config2Dir, os.ModePerm)
 
-	snapSet(t, "config.key.value", "value01")
-	snapSet(t, "apps."+TEST_SERVICE+".config.app.key.value", "value02")
-	snapSet(t, "apps."+TEST_SERVICE2+".config.app.key.value", "value03")
+	configDir2 := fmt.Sprintf("%s/%s/res/", env.SnapDataConf, testService2)
+	envFile2 := path.Join(configDir2, testService2+".env")
+	os.MkdirAll(configDir2, os.ModePerm)
 
-	require.Error(t, ProcessAppConfig(), "Should not accept empty service list")
+	t.Cleanup(func() {
+		require.NoError(t, snapctl.Unset("apps", "config", "env").Run())
+		os.RemoveAll(configDir)
+		os.RemoveAll(configDir2)
+	})
 
-	require.NoError(t, ProcessAppConfig(TEST_SERVICE, TEST_SERVICE2), "Error setting options.")
-	require.NoError(t, isInFile(configFile, "export KEY_VALUE=value01"), "Error validating .env file")
-	require.NoError(t, isInFile(configFile, "export APP_KEY_VALUE=value02"), "Error validating .env file")
+	t.Run("reject empty service list", func(t *testing.T) {
+		require.Error(t, options.ProcessAppConfig())
+	})
 
-	require.NoError(t, isInFile(config2File, "export KEY_VALUE=value01"), "Error validating .env file")
-	require.NoError(t, isInFile(config2File, "export APP_KEY_VALUE=value03"), "Error validating .env file")
+	t.Run("global options", func(t *testing.T) {
+		const key, value = "config.x.y", "value"
+
+		t.Cleanup(func() {
+			require.NoError(t, snapctl.Unset(key).Run())
+
+			require.NoError(t, os.RemoveAll(envFile))
+			require.NoError(t, os.RemoveAll(envFile2))
+		})
+
+		t.Run("set", func(t *testing.T) {
+			require.NoError(t, snapctl.Set(key, value).Run())
+
+			require.NoError(t, options.ProcessAppConfig(testService, testService2))
+
+			// both env files should have it
+			require.NoError(t, isInFile(envFile, "export X_Y=value"),
+				"File content:\n%s", catFile(envFile))
+			require.NoError(t, isInFile(envFile2, "export X_Y=value"),
+				"File content:\n%s", catFile(envFile2))
+		})
+
+		t.Run("unset", func(t *testing.T) {
+			require.NoError(t, snapctl.Unset(key, value).Run())
+
+			require.NoError(t, options.ProcessAppConfig(testService, testService2))
+
+			// it should be removed from both env files
+			require.Error(t, isInFile(envFile, "export X_Y=value"),
+				"File content:\n%s", catFile(envFile))
+			require.Error(t, isInFile(envFile2, "export X_Y=value"),
+				"File content:\n%s", catFile(envFile2))
+		})
+	})
+
+	t.Run("single app options", func(t *testing.T) {
+		const key, value = "apps." + testService + ".config.x.y", "value"
+
+		t.Cleanup(func() {
+			require.NoError(t, snapctl.Unset(key).Run())
+			require.NoError(t, os.RemoveAll(envFile))
+		})
+
+		t.Run("set", func(t *testing.T) {
+			require.NoError(t, snapctl.Set(key, value).Run())
+
+			require.NoError(t, options.ProcessAppConfig(testService, testService2))
+
+			// first env file should have it
+			require.NoError(t, isInFile(envFile, "export X_Y=value"),
+				"File content:\n%s", catFile(envFile))
+
+			// second env file should NOT have it
+			require.Error(t, isInFile(envFile2, "export X_Y=value"),
+				"File content:\n%s", catFile(envFile2))
+		})
+
+		t.Run("unset", func(t *testing.T) {
+			require.NoError(t, snapctl.Unset(key, value).Run())
+
+			require.NoError(t, options.ProcessAppConfig(testService, testService2))
+
+			// it should be removed from the env file
+			require.Error(t, isInFile(envFile, "export X_Y=value"),
+				"File content:\n%s", catFile(envFile))
+		})
+	})
+
+	t.Run("reject mixed legacy options", func(t *testing.T) {
+		const (
+			legacyKey, legacyValue = "env.core-data.service.host", "legacy"
+			key, value             = "apps.core-data.config.x.y", "value"
+		)
+
+		t.Cleanup(func() {
+			require.NoError(t, snapctl.Unset(legacyKey).Run())
+			require.NoError(t, snapctl.Unset(key).Run())
+
+			require.NoError(t, os.RemoveAll(envFile))
+		})
+
+		t.Run("set", func(t *testing.T) {
+			require.NoError(t, snapctl.Set(legacyKey, legacyValue).Run())
+			require.NoError(t, snapctl.Set(key, value).Run())
+
+			require.NoError(t, applyLegacyOptions("core-data"))
+			require.Error(t, options.ProcessAppConfig(testService, "core-data"))
+		})
+	})
 
 }
 
 // utility testing functions
 
-func snapSet(t *testing.T, key, value string) {
-	err := exec.Command("snapctl", "set", fmt.Sprintf("%s=%s", key, value)).Run()
-	require.NoError(t, err, "Error setting config value via snapctl.")
-}
-
 func isInFile(file string, line string) error {
 	// read the whole file at once
-	b, err := ioutil.ReadFile(file)
+	b, err := os.ReadFile(file)
 	if err != nil {
 		return err
 	}
@@ -77,4 +163,28 @@ func isInFile(file string, line string) error {
 	} else {
 		return fmt.Errorf("Line %s not found in %s", line, file)
 	}
+}
+
+func catFile(file string) string {
+	// read the whole file at once
+	b, err := os.ReadFile(file)
+	if err != nil {
+		panic(err)
+	}
+
+	return string(b)
+}
+
+func applyLegacyOptions(service string) error {
+	envJSON, err := hooks.NewSnapCtl().Config(hooks.EnvConfig + "." + service)
+	if err != nil {
+		return fmt.Errorf("failed to read config options for %s: %v", service, err)
+	}
+
+	if envJSON != "" {
+		if err := hooks.HandleEdgeXConfig(service, envJSON, nil); err != nil {
+			return err
+		}
+	}
+	return nil
 }
