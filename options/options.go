@@ -70,7 +70,42 @@ func processGlobalConfigOptions(services []string) error {
 		for env, value := range configuration {
 			overrides.setEnvVariable(env, value)
 		}
-		overrides.writeEnvFile(true)
+		overrides.writeEnvFile(false)
+	}
+	return nil
+}
+
+func migrateLegacyOptions() error {
+
+	clear := []string{"env.security-bootstrapper", "env.security-secret-store"}
+
+	namespaceMap := map[string]string{
+		"env.security-secret-store.add-secretstore-tokens": "apps.security-secretstore-setup.config.add-secretstore-tokens",
+		"env.security-secret-store.add-known-secrets":      "apps.security-secretstore-setup.config.add-known-secrets",
+		"env.security-bootstrapper.add-registry-acl-roles": "apps.security-bootstrapper.config.add-registry-acl-roles"}
+
+	for k, v := range namespaceMap {
+		setting, err := snapctl.Get(k).Run()
+		if err != nil {
+			return err
+		}
+		if setting != "" {
+			snapctl.Unset(k).Run()
+			snapctl.Set(v, setting).Run()
+			log.Debugf("Migrated %s to %s", k, v)
+		}
+	}
+
+	for _, s := range clear {
+		snapctl.Unset(s).Run()
+	}
+
+	legacyOptions, err := snapctl.Get("env").Run()
+	if err != nil {
+		return err
+	}
+	if legacyOptions != "" && legacyOptions != "{}" {
+		return fmt.Errorf("legacy 'env.' options must not be mixed with the new 'config.' and 'app.' options")
 	}
 	return nil
 }
@@ -132,6 +167,12 @@ func processAppConfigOptions(services []string) error {
 // b) snap set edgex-snap-name config.<my.env.var>
 //	-> sets env variable for all apps (e.g. DEBUG=true, SERVICE_SERVERBINDADDRESS=0.0.0.0)
 func ProcessAppConfig(services ...string) error {
+
+	err := migrateLegacyOptions()
+
+	if err != nil {
+		return err
+	}
 
 	if len(services) == 0 {
 		return fmt.Errorf("empty service list")
