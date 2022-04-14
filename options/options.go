@@ -75,6 +75,41 @@ func processGlobalConfigOptions(services []string) error {
 	return nil
 }
 
+func migrateLegacyOptions() error {
+
+	clear := []string{"env.security-bootstrapper", "env.security-secret-store"}
+
+	namespaceMap := map[string]string{
+		"env.security-secret-store.add-secretstore-tokens": "apps.security-secretstore-setup.config.add-secretstore-tokens",
+		"env.security-secret-store.add-known-secrets":      "apps.security-secretstore-setup.config.add-known-secrets",
+		"env.security-bootstrapper.add-registry-acl-roles": "apps.security-bootstrapper.config.add-registry-acl-roles"}
+
+	for k, v := range namespaceMap {
+		setting, err := snapctl.Get(k).Run()
+		if err != nil {
+			return err
+		}
+		if setting != "" {
+			snapctl.Unset(k).Run()
+			snapctl.Set(v, setting).Run()
+			log.Debugf("Migrated %s to %s", k, v)
+		}
+	}
+
+	for _, s := range clear {
+		snapctl.Unset(s).Run()
+	}
+
+	legacyOptions, err := snapctl.Get("env").Run()
+	if err != nil {
+		return err
+	}
+	if legacyOptions != "" && legacyOptions != "{}" {
+		return fmt.Errorf("legacy 'env.' options must not be mixed with the new 'config.' and 'app.' options")
+	}
+	return nil
+}
+
 // Process the "apps.<app>.config.<my.env.var>" configuration
 //	-> setting env var MY_ENV_VAR for an app
 func processAppConfigOptions(services []string) error {
@@ -133,12 +168,10 @@ func processAppConfigOptions(services []string) error {
 //	-> sets env variable for all apps (e.g. DEBUG=true, SERVICE_SERVERBINDADDRESS=0.0.0.0)
 func ProcessAppConfig(services ...string) error {
 
-	legacyOptions, err := snapctl.Get("env").Run()
+	err := migrateLegacyOptions()
+
 	if err != nil {
 		return err
-	}
-	if legacyOptions != "" {
-		return fmt.Errorf("Legacy 'env.' options must not be mixed with the new 'config.' and 'app.' options")
 	}
 
 	if len(services) == 0 {

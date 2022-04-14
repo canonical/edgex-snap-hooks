@@ -126,6 +126,27 @@ func TestProcessAppConfig(t *testing.T) {
 		})
 	})
 
+	t.Run("Set mixed legacy options", func(t *testing.T) {
+		const (
+			legacyKey, legacyValue = "env.security-bootstrapper.add-registry-acl-roles", "legacy1,legacy2"
+			key, value             = "apps.security-bootstrapper.config.add-registry-acl-roles", "legacy1,legacy2"
+		)
+
+		t.Cleanup(func() {
+			//			assert.NoError(t, snapctl.Unset("env").Run())
+			assert.NoError(t, snapctl.Unset(legacyKey).Run())
+			assert.NoError(t, snapctl.Unset(key).Run())
+		})
+		t.Run("set", func(t *testing.T) {
+			require.NoError(t, snapctl.Set(legacyKey, legacyValue).Run())
+			require.NoError(t, options.ProcessAppConfig("security-bootstrapper"))
+			k, err := snapctl.Get(key).Run()
+			require.Equal(t, k, value)
+			require.NoError(t, err)
+
+		})
+	})
+
 	t.Run("reject mixed legacy options", func(t *testing.T) {
 		const (
 			legacyKey, legacyValue = "env.core-data.service.host", "legacy"
@@ -151,6 +172,7 @@ func TestProcessAppConfig(t *testing.T) {
 			require.NoError(t, applyLegacyOptions("core-data"))
 			require.Error(t, options.ProcessAppConfig(testService, "core-data"))
 		})
+
 	})
 
 }
