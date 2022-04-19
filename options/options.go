@@ -90,14 +90,20 @@ func migrateLegacyOptions() error {
 			return err
 		}
 		if setting != "" {
-			snapctl.Unset(k).Run()
-			snapctl.Set(v, setting).Run()
+			if err := snapctl.Unset(k).Run(); err != nil {
+				return err
+			}
+			if err := snapctl.Set(v, setting).Run(); err != nil {
+				return err
+			}
 			log.Debugf("Migrated %s to %s", k, v)
 		}
 	}
 
 	for _, s := range clear {
-		snapctl.Unset(s).Run()
+		if err := snapctl.Unset(s).Run(); err != nil {
+			return err
+		}
 	}
 
 	legacyOptions, err := snapctl.Get("env").Run()
@@ -105,7 +111,7 @@ func migrateLegacyOptions() error {
 		return err
 	}
 	if legacyOptions != "" && legacyOptions != "{}" {
-		return fmt.Errorf("legacy 'env.' options must not be mixed with the new 'config.' and 'app.' options")
+		return fmt.Errorf("'config.' and 'app.' options must not be mixed with legacy 'env.' options: %s", legacyOptions)
 	}
 	return nil
 }
