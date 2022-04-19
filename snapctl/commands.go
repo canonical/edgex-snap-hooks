@@ -4,16 +4,15 @@ import (
 	"fmt"
 	"os/exec"
 	"strings"
+
+	"github.com/canonical/edgex-snap-hooks/v2/log"
 )
 
 func run(subcommand string, subargs ...string) (string, error) {
 	args := []string{subcommand}
 	args = append(args, subargs...)
 
-	if debug {
-		fmt.Printf("[debug] snapctl %s\n",
-			strings.Join(args, " "))
-	}
+	log.Debugf("[debug] snapctl %s\n", strings.Join(args, " "))
 
 	output, err := exec.Command("snapctl", args...).CombinedOutput()
 	if err != nil {
