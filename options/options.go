@@ -166,22 +166,36 @@ func processAppConfigOptions(services []string) error {
 // b) snap set edgex-snap-name config.<my.env.var>
 //	-> sets env variable for all apps (e.g. DEBUG=true, SERVICE_SERVERBINDADDRESS=0.0.0.0)
 func ProcessAppConfig(services ...string) error {
+	if len(services) == 0 {
+		return fmt.Errorf("empty service list")
+	}
 
 	err := migrateLegacyOptions()
 	if err != nil {
 		return err
 	}
 
-	legacyOptions, err := snapctl.Get("env").Run()
+	isSet := func(v string) bool {
+		return !(v == "" || v == "{}")
+	}
+
+	// reject mixed legacy options
+	appsOptions, err := snapctl.Get("apps").Run()
 	if err != nil {
 		return err
 	}
-	if legacyOptions != "" && legacyOptions != "{}" {
-		return fmt.Errorf("'config.' and 'app.' options must not be mixed with legacy 'env.' options: %s", legacyOptions)
+	globalOptions, err := snapctl.Get("config").Run()
+	if err != nil {
+		return err
 	}
-
-	if len(services) == 0 {
-		return fmt.Errorf("empty service list")
+	envOptions, err := snapctl.Get("env").Run()
+	if err != nil {
+		return err
+	}
+	if isSet(envOptions) &&
+		(isSet(appsOptions) || isSet(globalOptions)) {
+		return fmt.Errorf("'config.' and 'app.' options must not be mixed with legacy 'env.' options: %s",
+			envOptions)
 	}
 
 	if err := processGlobalConfigOptions(services); err != nil {
