@@ -106,13 +106,6 @@ func migrateLegacyOptions() error {
 		}
 	}
 
-	legacyOptions, err := snapctl.Get("env").Run()
-	if err != nil {
-		return err
-	}
-	if legacyOptions != "" && legacyOptions != "{}" {
-		return fmt.Errorf("'config.' and 'app.' options must not be mixed with legacy 'env.' options: %s", legacyOptions)
-	}
 	return nil
 }
 
@@ -175,9 +168,16 @@ func processAppConfigOptions(services []string) error {
 func ProcessAppConfig(services ...string) error {
 
 	err := migrateLegacyOptions()
-
 	if err != nil {
 		return err
+	}
+
+	legacyOptions, err := snapctl.Get("env").Run()
+	if err != nil {
+		return err
+	}
+	if legacyOptions != "" && legacyOptions != "{}" {
+		return fmt.Errorf("'config.' and 'app.' options must not be mixed with legacy 'env.' options: %s", legacyOptions)
 	}
 
 	if len(services) == 0 {
