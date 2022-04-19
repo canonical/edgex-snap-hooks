@@ -84,6 +84,7 @@ func migrateLegacyOptions() error {
 		"env.security-secret-store.add-known-secrets":      "apps.security-secretstore-setup.config.add-known-secrets",
 		"env.security-bootstrapper.add-registry-acl-roles": "apps.security-bootstrapper.config.add-registry-acl-roles"}
 
+	migrated := false
 	for k, v := range namespaceMap {
 		setting, err := snapctl.Get(k).Run()
 		if err != nil {
@@ -97,12 +98,15 @@ func migrateLegacyOptions() error {
 				return err
 			}
 			log.Debugf("Migrated %s to %s", k, v)
+			migrated = true
 		}
 	}
 
-	for _, s := range clear {
-		if err := snapctl.Unset(s).Run(); err != nil {
-			return err
+	if migrated {
+		for _, s := range clear {
+			if err := snapctl.Unset(s).Run(); err != nil {
+				return err
+			}
 		}
 	}
 
