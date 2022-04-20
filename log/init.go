@@ -1,9 +1,9 @@
 package log
 
 import (
+	"bytes"
 	"os"
-
-	"github.com/canonical/edgex-snap-hooks/v2/snapctl"
+	"os/exec"
 )
 
 var (
@@ -17,12 +17,12 @@ func init() {
 }
 
 func initialize() {
-	value, err := snapctl.Get("debug").Run()
+	value, err := exec.Command("snapctl", "get", "debug").CombinedOutput()
 	if err != nil {
 		stderr(err)
 		os.Exit(1)
 	}
-	debug = (value == "true")
+	debug = (string(bytes.TrimSpace(value)) == "true")
 
 	snapInstanceKey = os.Getenv("SNAP_INSTANCE_NAME")
 	if snapInstanceKey == "" {
