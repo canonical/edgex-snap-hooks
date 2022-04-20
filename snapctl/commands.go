@@ -12,7 +12,7 @@ func run(subcommand string, subargs ...string) (string, error) {
 	args := []string{subcommand}
 	args = append(args, subargs...)
 
-	log.Debugf("[debug] snapctl %s\n", strings.Join(args, " "))
+	log.Debugf("Executing 'snapctl %s'\n", strings.Join(args, " "))
 
 	output, err := exec.Command("snapctl", args...).CombinedOutput()
 	if err != nil {
