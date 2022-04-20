@@ -84,29 +84,32 @@ func migrateLegacyOptions() error {
 		"env.security-secret-store.add-known-secrets":      "apps.security-secretstore-setup.config.add-known-secrets",
 		"env.security-bootstrapper.add-registry-acl-roles": "apps.security-bootstrapper.config.add-registry-acl-roles"}
 
+	migrated := false
 	for k, v := range namespaceMap {
 		setting, err := snapctl.Get(k).Run()
 		if err != nil {
 			return err
 		}
 		if setting != "" {
-			snapctl.Unset(k).Run()
-			snapctl.Set(v, setting).Run()
+			if err := snapctl.Unset(k).Run(); err != nil {
+				return err
+			}
+			if err := snapctl.Set(v, setting).Run(); err != nil {
+				return err
+			}
 			log.Debugf("Migrated %s to %s", k, v)
+			migrated = true
 		}
 	}
 
-	for _, s := range clear {
-		snapctl.Unset(s).Run()
+	if migrated {
+		for _, s := range clear {
+			if err := snapctl.Unset(s).Run(); err != nil {
+				return err
+			}
+		}
 	}
 
-	legacyOptions, err := snapctl.Get("env").Run()
-	if err != nil {
-		return err
-	}
-	if legacyOptions != "" && legacyOptions != "{}" {
-		return fmt.Errorf("legacy 'env.' options must not be mixed with the new 'config.' and 'app.' options")
-	}
 	return nil
 }
 
@@ -167,15 +170,36 @@ func processAppConfigOptions(services []string) error {
 // b) snap set edgex-snap-name config.<my.env.var>
 //	-> sets env variable for all apps (e.g. DEBUG=true, SERVICE_SERVERBINDADDRESS=0.0.0.0)
 func ProcessAppConfig(services ...string) error {
+	if len(services) == 0 {
+		return fmt.Errorf("empty service list")
+	}
 
 	err := migrateLegacyOptions()
-
 	if err != nil {
 		return err
 	}
 
-	if len(services) == 0 {
-		return fmt.Errorf("empty service list")
+	isSet := func(v string) bool {
+		return !(v == "" || v == "{}")
+	}
+
+	// reject mixed legacy options
+	appsOptions, err := snapctl.Get("apps").Run()
+	if err != nil {
+		return err
+	}
+	globalOptions, err := snapctl.Get("config").Run()
+	if err != nil {
+		return err
+	}
+	envOptions, err := snapctl.Get("env").Run()
+	if err != nil {
+		return err
+	}
+	if isSet(envOptions) &&
+		(isSet(appsOptions) || isSet(globalOptions)) {
+		return fmt.Errorf("'config.' and 'app.' options must not be mixed with legacy 'env.' options: %s",
+			envOptions)
 	}
 
 	if err := processGlobalConfigOptions(services); err != nil {
