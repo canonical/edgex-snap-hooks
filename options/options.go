@@ -21,7 +21,6 @@ package options
 import (
 	"encoding/json"
 	"fmt"
-	"strings"
 
 	"github.com/canonical/edgex-snap-hooks/v2/log"
 	"github.com/canonical/edgex-snap-hooks/v2/snapctl"
@@ -80,38 +79,10 @@ func processGlobalConfigOptions(services []string) error {
 
 func migrateLegacyInternalOptions() error {
 
-	clear := []string{"env.security-bootstrapper", "env.security-secret-store"}
-
-	/*
-		"env": {
-			"security-proxy": {
-				"public-key": "",
-				"user": "username,user_id,algorithm",
-				"tls-certificate": "",
-				"tls-private-key": "",
-				"tls-sni": ""
-			}
-		}
-	*/
-
-	// apps.secrets-config.proxy.admin-public-key
-	// apps.secrets-config.proxy.tls.key
-	// apps.secrets-config.proxy.tls.cert
-	// apps.secrets-config.proxy.tls.snis
-	const proxyUserAttributes = "{user,id,algorithm}"
 	namespaceMap := map[string]string{
 		"env.security-secret-store.add-secretstore-tokens": "apps.security-secretstore-setup.config.add-secretstore-tokens",
 		"env.security-secret-store.add-known-secrets":      "apps.security-secretstore-setup.config.add-known-secrets",
 		"env.security-bootstrapper.add-registry-acl-roles": "apps.security-bootstrapper.config.add-registry-acl-roles",
-		"env.security-proxy.user":                          "apps.secrets-config.proxy.admin." + proxyUserAttributes,
-		"env.security-proxy.public-key":                    "apps.secrets-config.proxy.admin.public-key",
-		"env.security-proxy.tls-certificate":               "apps.secrets-config.proxy.tls.cert",
-		"env.security-proxy.tls-private-key":               "apps.secrets-config.proxy.tls.key",
-		"env.security-proxy.tls-sni":                       "apps.secrets-config.proxy.tls.snis",
-		// "env.security-proxy.public-key":                    "apps.security-proxy-setup.admin-public-key",
-		// "env.security-proxy.tls-certificate":               "apps.security-proxy-setup.tls-certificate",
-		// "env.security-proxy.tls-private-key":               "apps.security-proxy-setup.tls-private-key",
-		// "env.security-proxy.tls-sni":                       "apps.security-proxy-setup.tls-sni",
 	}
 
 	migrated := false
@@ -124,41 +95,18 @@ func migrateLegacyInternalOptions() error {
 			if err := snapctl.Unset(k).Run(); err != nil {
 				return err
 			}
-			switch {
-			case strings.HasSuffix(v, proxyUserAttributes):
-				prefix := strings.TrimSuffix(v, proxyUserAttributes)
 
-				// split into multiple options
-				parts := strings.Split(setting, ",")
-				user, id, algorithm := parts[0], parts[1], parts[2]
-
-				if err := snapctl.Set(prefix+"user", user).Run(); err != nil {
-					return err
-				}
-				if err := snapctl.Set(prefix+"id", id).Run(); err != nil {
-					return err
-				}
-				if err := snapctl.Set(prefix+"algorithm", algorithm).Run(); err != nil {
-					return err
-				}
-
-				log.Debugf("Migrated %s to %s", k, proxyUserAttributes)
-			default:
-				if err := snapctl.Set(v, setting).Run(); err != nil {
-					return err
-				}
-				log.Debugf("Migrated %s to %s", k, v)
+			if err := snapctl.Set(v, setting).Run(); err != nil {
+				return err
 			}
-
+			log.Debugf("Migrated %s to %s", k, v)
 			migrated = true
 		}
 	}
 
 	if migrated {
-		for _, s := range clear {
-			if err := snapctl.Unset(s).Run(); err != nil {
-				return err
-			}
+		if err := snapctl.Set("config.migrated", "true").Run(); err != nil {
+			return err
 		}
 	}
 
@@ -268,16 +216,13 @@ func ProcessAppConfig(services ...string) error {
 		}
 		if isSet(appsOptions) || isSet(globalOptions) {
 			return fmt.Errorf(`'config.' and 'app.' options are allowed only when config.enabled is true.
-Note: Setting config.enabled=true will convert the following legacy 'env.' options:
+
+Note: Setting config.enabled=true will unset existing 'env.' options and ignore future sets!! 
+
+Exception: The following legacy 'env.' options are automatically converted:
 	- env.security-secret-store.add-secretstore-tokens
 	- env.security-secret-store.add-known-secrets
-	- env.security-bootstrapper.add-registry-acl-roles
-	- env.security-proxy.user
-	- env.security-proxy.public-key
-	- env.security-proxy.tls-certificate
-	- env.security-proxy.tls-private-key
-	- env.security-proxy.tls-sni
-All other legacy 'env.' options will be unset!`)
+	- env.security-bootstrapper.add-registry-acl-roles`)
 		} else {
 			// do nothing
 			return nil
@@ -288,6 +233,13 @@ All other legacy 'env.' options will be unset!`)
 	if err != nil {
 		return err
 	}
+
+	// It is important to unset any options to avoid conflicts in
+	// 	deprecated configure hook processing
+	if err := snapctl.Unset("env").Run(); err != nil {
+		return err
+	}
+	log.Info("Unset all 'env.' options.")
 
 	if err := processGlobalConfigOptions(services); err != nil {
 		return err
