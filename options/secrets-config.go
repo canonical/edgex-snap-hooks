@@ -103,13 +103,23 @@ func securityProxyExecSecretsConfig(args []string) error {
 	return nil
 }
 
-// Remove the semaphore, so that we can set the certificate again
+// Deprecated
 func SecurityProxyDeleteCurrentTLSCertIfSet() error {
+	return securityProxyDeleteCurrentTLSCertIfSet()
+}
+
+// Remove the semaphore, so that we can set the certificate again
+func securityProxyDeleteCurrentTLSCertIfSet() error {
 	return securityProxyRemoveSemaphore(tlsSemaphoreFile)
 }
 
-// Delete the current user - if one has been set up
+// Deprecated
 func SecurityProxyDeleteCurrentUserIfSet() error {
+	return securityProxyDeleteCurrentUserIfSet()
+}
+
+// Delete the current user - if one has been set up
+func securityProxyDeleteCurrentUserIfSet() error {
 	// if no user has been set up, then ignore the request
 	username, err := securityProxyReadFile(userSemaphoreFile)
 	if err != nil {
@@ -134,8 +144,13 @@ func SecurityProxyDeleteCurrentUserIfSet() error {
 	return nil
 }
 
-// Set up the proxy with the specified user.
+// Deprecated
 func SecurityProxyAddUser(jwtUsername, jwtUserID, jwtAlgorithm, jwtPublicKey string) error {
+	return securityProxyAddUser(jwtUsername, jwtUserID, jwtAlgorithm, jwtPublicKey)
+}
+
+// Set up the proxy with the specified user.
+func securityProxyAddUser(jwtUsername, jwtUserID, jwtAlgorithm, jwtPublicKey string) error {
 	currentUser, err := securityProxyReadFile(userSemaphoreFile)
 	if err == nil && currentUser != "" {
 		if currentUser == jwtUsername {
@@ -171,8 +186,13 @@ func SecurityProxyAddUser(jwtUsername, jwtUserID, jwtAlgorithm, jwtPublicKey str
 	return nil
 }
 
-// Set the TLS certificate. If a certificate has already been set then silently ignore the request
+// Deprecated
 func SecurityProxySetTLSCertificate(tlsCertificate, tlsPrivateKey, tlsSNIs string) error {
+	return securityProxySetTLSCertificate(tlsCertificate, tlsPrivateKey, tlsSNIs)
+}
+
+// Set the TLS certificate. If a certificate has already been set then silently ignore the request
+func securityProxySetTLSCertificate(tlsCertificate, tlsPrivateKey, tlsSNIs string) error {
 	_, err := securityProxyReadFile(tlsSemaphoreFile)
 	if err == nil {
 		log.Debug("The TLS certificate has already been set. To set it again, first set tls-certificate and tls-private-key to an empty string")
