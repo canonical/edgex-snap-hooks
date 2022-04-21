@@ -19,10 +19,12 @@
 package options
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"os/exec"
+	"strings"
 
 	"github.com/canonical/edgex-snap-hooks/v2/env"
 	"github.com/canonical/edgex-snap-hooks/v2/log"
@@ -32,7 +34,23 @@ const (
 	userSemaphoreFile  = ".secrets-config-user"
 	tlsSemaphoreFile   = ".secrets-config-tls"
 	kongAdminTokenFile = "kong-admin-jwt"
+	// proxy admin user
+	defaultProxyUsername = "admin" // identical to object key
+	defaultProxyUserId   = "1"
+	defaultProxyUserAlgo = "ES256"
 )
+
+type proxyOptions struct {
+	Admin struct {
+		PublicKey string `json:"public-key"`
+	} `json:"admin"` // identical to username
+
+	TLS struct {
+		Cert string `json:"cert"`
+		Key  string `json:"key"`
+		SNIs string `json:"snis"`
+	} `json:"tls"`
+}
 
 // Write a security-proxy file
 func securityProxyWriteFile(filename, contents string) (path string, err error) {
@@ -76,20 +94,22 @@ func securityProxyExecSecretsConfig(args []string) error {
 	service := "security-proxy-setup"
 	cmdSecretsConfig := exec.Command("secrets-config", args...)
 	cmdSecretsConfig.Dir = fmt.Sprintf("%s/%s", env.SnapDataConf, service)
-	out, err := cmdSecretsConfig.Output()
-	log.Debug("Executed \"secrets-config " + fmt.Sprint(args) + "\" result=" + string(out))
-	return err
+	out, err := cmdSecretsConfig.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("error executing 'secrets-config %s': error=%s: output=%s",
+			strings.Join(args, " "), err, out)
+	}
+	log.Debugf("Executed 'secrets-config %s': output=%s", strings.Join(args, " "), out)
+	return nil
 }
 
 // Remove the semaphore, so that we can set the certificate again
 func SecurityProxyDeleteCurrentTLSCertIfSet() error {
-
 	return securityProxyRemoveSemaphore(tlsSemaphoreFile)
 }
 
 // Delete the current user - if one has been set up
 func SecurityProxyDeleteCurrentUserIfSet() error {
-	service := "security-proxy-setup"
 	// if no user has been set up, then ignore the request
 	username, err := securityProxyReadFile(userSemaphoreFile)
 	if err != nil {
@@ -97,16 +117,26 @@ func SecurityProxyDeleteCurrentUserIfSet() error {
 		return nil
 	}
 
-	args := []string{"proxy", "deluser", "--user", username}
-	cmdSecretsConfig := exec.Command("secrets-config", args...)
-	cmdSecretsConfig.Dir = fmt.Sprintf("%s/%s", env.SnapDataConf, service)
-	out, err := cmdSecretsConfig.Output()
+	kongAdminToken, err := securityProxyReadFile(kongAdminTokenFile)
 	if err != nil {
 		return err
 	}
 
+	args := []string{"proxy", "deluser", "--user", username, "--jwt", kongAdminToken}
+	// service := "security-proxy-setup"
+	// cmdSecretsConfig := exec.Command("secrets-config", args...)
+	// cmdSecretsConfig.Dir = fmt.Sprintf("%s/%s", env.SnapDataConf, service)
+	// out, err := cmdSecretsConfig.CombinedOutput()
+	// if err != nil {
+	// 	return fmt.Errorf("error executing secrets-config command: %s: %s", err, out)
+	// }
+	err = securityProxyExecSecretsConfig(args)
+	if err != nil {
+		return fmt.Errorf("error executing secrets-config command: %s", err)
+	}
+
 	securityProxyRemoveSemaphore(userSemaphoreFile)
-	log.Debug("Executed \"secrets-config " + fmt.Sprint(args) + "\" result=" + string(out))
+	// log.Debug("Executed \"secrets-config " + fmt.Sprint(args) + "\" result=" + string(out))
 	log.Info("proxy: Removed current user")
 	return nil
 }
@@ -138,7 +168,7 @@ func SecurityProxyAddUser(jwtUsername, jwtUserID, jwtAlgorithm, jwtPublicKey str
 	args := []string{"proxy", "adduser", "--token-type", "jwt", "--user", jwtUsername, "--id", jwtUserID, "--algorithm", jwtAlgorithm, "--public_key", publicKeyFilePath, "--jwt", kongAdminToken}
 	err = securityProxyExecSecretsConfig(args)
 	if err != nil {
-		return fmt.Errorf("failed to create proxy user - %v", err)
+		return fmt.Errorf("error executing secrets-config command: %s", err)
 	}
 	_, err = securityProxyWriteFile(userSemaphoreFile, jwtUsername)
 	if err != nil {
@@ -184,4 +214,134 @@ func SecurityProxySetTLSCertificate(tlsCertificate, tlsPrivateKey, tlsSNI string
 	}
 	log.Info("New TLS Certificate and private key set")
 	return nil
+}
+
+func validateSecretsConfigProxyOptions(proxyMap configOptions) error {
+	// TODO
+	// flatten and validate
+
+	// const (
+	// 	keyAdmin       = "admin"
+	// 	keyAdminPubKey = "admin.public-key"
+	// 	keyTLS         = "tls"
+	// 	keyTLSCert     = "tls.cert"
+	// 	keyTLSKey      = "tls.key"
+	// 	keyTLSSNIs     = "tls.snis"
+	// )
+
+	// supportedKeys := map[string]bool{
+	// 	keyAdmin:       true,
+	// 	keyAdminPubKey: true,
+	// 	keyTLS:         true,
+	// 	keyTLSCert:     true,
+	// 	keyTLSKey:      true,
+	// 	keyTLSSNIs:     true,
+	// }
+
+	// for k := range proxyOptions {
+	// 	supported := supportedKeys[k]
+	// 	if !supported {
+	// 		return fmt.Errorf("Unsupported secrets-config proxy key: %s", k)
+	// 	}
+	// }
+	return nil
+}
+
+func processSecretsConfigProxyOptions(proxyMap configOptions) error {
+	log.Debugf("Processing secrets-config proxy: %v", proxyMap)
+
+	err := validateSecretsConfigProxyOptions(proxyMap)
+	if err != nil {
+		return fmt.Errorf("error validating secrets-config proxy options: %s", err)
+	}
+
+	// if jwtUsername == "" && jwtPublicKey == "" {
+	// 	// if the values have been set to "" then delete the current user
+	// 	options.SecurityProxyDeleteCurrentUserIfSet()
+	// } else if jwtUsername != "" && jwtPublicKey != "" {
+	// 	// else add a new user
+	// 	err = options.SecurityProxyAddUser(jwtUsername, jwtUserID, jwtAlgorithm, jwtPublicKey)
+	// 	if err != nil {
+	// 		return err
+	// 	}
+	// }
+
+	// // add/delete user
+	// adminPubKeyInt := proxyOptions[keyAdminPubKey]
+	// log.Debugf("Processing secrets-config proxy adminPubKeyInt: %v", adminPubKeyInt)
+	// if adminPubKeyInt != nil {
+	// 	adminPubKey, ok := adminPubKeyInt.(string)
+	// 	if !ok {
+	// 		return fmt.Errorf("%s is not a string: %v", keyUsersAdminPubKey, adminPubKeyInt)
+	// 	}
+
+	// 	if err := SecurityProxyAddUser(defaultUser, defaultId, defaultAlgo, adminPubKey); err != nil {
+	// 		return fmt.Errorf("Error adding user: %s", err)
+	// 	}
+	// } else {
+	// 	if err := SecurityProxyDeleteCurrentUserIfSet(); err != nil {
+	// 		return fmt.Errorf("Error deleting user: %s", err)
+	// 	}
+	// }
+
+	b, err := json.Marshal(proxyMap)
+	if err != nil {
+		return fmt.Errorf("unexpected proxy marshal error: %s", err)
+	}
+	var proxyOptions proxyOptions
+	err = json.Unmarshal(b, &proxyOptions)
+	if err != nil {
+		return fmt.Errorf("unexpected proxy unmarshal error: %s", err)
+	}
+
+	// process the admin user
+	if proxyOptions.Admin.PublicKey != "" {
+		if err := SecurityProxyAddUser(
+			defaultProxyUsername,
+			defaultProxyUserId,
+			defaultProxyUserAlgo,
+			proxyOptions.Admin.PublicKey); err != nil {
+			return fmt.Errorf("error adding user: %s", err)
+		}
+	} else {
+		if err := SecurityProxyDeleteCurrentUserIfSet(); err != nil {
+			return fmt.Errorf("error deleting user: %s", err)
+		}
+	}
+
+	// if tlsCertificate == "" && tlsPrivateKey == "" {
+	// 	// if the values have been set to "" then clear the semaphore so that a new cert can be set
+	// 	options.SecurityProxyDeleteCurrentTLSCertIfSet()
+	// } else if tlsCertificate != "" && tlsPrivateKey != "" {
+	// 	// Set the TLS certificate and private key
+	// 	err = options.SecurityProxySetTLSCertificate(tlsCertificate, tlsPrivateKey, tlsSNI)
+	// 	if err != nil {
+	// 		return err
+	// 	}
+	// }
+
+	// process TLS certificate
+	if proxyOptions.TLS.Cert != "" && proxyOptions.TLS.Key != "" {
+		err := SecurityProxySetTLSCertificate(
+			proxyOptions.TLS.Cert,
+			proxyOptions.TLS.Key,
+			proxyOptions.TLS.SNIs)
+		if err != nil {
+			return err
+		}
+	} else {
+		SecurityProxyDeleteCurrentTLSCertIfSet()
+	}
+
+	return nil
+}
+
+func processSecretsConfigOptions(key string, value configOptions) error {
+	log.Debugf("Processing secrets-config: %s=%v", key, value)
+	switch key {
+	case "proxy":
+		return processSecretsConfigProxyOptions(value)
+	default:
+		return fmt.Errorf("unknown secrets-config option: %s", key)
+	}
 }

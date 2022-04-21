@@ -27,9 +27,11 @@ import (
 	"github.com/canonical/edgex-snap-hooks/v2/snapctl"
 )
 
+type configOptions map[string]interface{}
+
 type snapOptions struct {
-	Apps   map[string]map[string]map[string]interface{} `json:"apps"`
-	Config map[string]interface{}                       `json:"config"`
+	Apps   map[string]map[string]configOptions `json:"apps"`
+	Config configOptions                       `json:"config"`
 }
 
 func getConfigMap(config map[string]interface{}) (map[string]string, error) {
@@ -163,6 +165,15 @@ func migrateLegacyInternalOptions() error {
 	return nil
 }
 
+func processAppCustomOptions(service, key string, value configOptions) error {
+	switch service {
+	case "secrets-config":
+		return processSecretsConfigOptions(key, value)
+	default:
+		return fmt.Errorf("Unknown custom option %s for service %s", key, service)
+	}
+}
+
 // Process the "apps.<app>.config.<my.env.var>" configuration
 //	-> setting env var MY_ENV_VAR for an app
 func processAppConfigOptions(services []string) error {
@@ -177,33 +188,65 @@ func processAppConfigOptions(services []string) error {
 	if err != nil {
 		return err
 	}
+
+	// TODO
+	// reject unknown servies
+
 	// iterate through the known services in this snap
 	for _, service := range services {
-		log.Debugf("Processing service:%s", service)
+		log.Debugf("Processing service: %s", service)
 
 		// get the configuration specified for each service
 		// and create the environment override file
 		appConfig := options.Apps[service]
-		log.Debugf("Processing appConfig:%v", appConfig)
+		log.Debugf("Processing appConfig: %v", appConfig)
 		if appConfig != nil {
-			config := appConfig["config"]
-			log.Debugf("Processing config:%v", config)
-			if config != nil {
-				configuration, err := getConfigMap(config)
+			for k, v := range appConfig {
+				if k == "config" { // config overrides
+					config := v
+					log.Debugf("Processing config: %v", config)
+					if config != nil {
+						configuration, err := getConfigMap(config)
 
-				log.Debugf("Processing configuration:%v", configuration)
-				if err != nil {
-					return err
-				}
-				overrides := getEnvVarFile(service)
+						log.Debugf("Processing configuration: %v", configuration)
+						if err != nil {
+							return err
+						}
+						overrides := getEnvVarFile(service)
 
-				log.Debugf("Processing overrides:%v", overrides)
-				for env, value := range configuration {
-					log.Debugf("Processing overrides setEnvVariable:%v %v", env, value)
-					overrides.setEnvVariable(env, value)
+						log.Debugf("Processing overrides: %v", overrides)
+						for env, value := range configuration {
+
+							log.Debugf("Processing overrides setEnvVariable: %v=%v", env, value)
+							overrides.setEnvVariable(env, value)
+						}
+						overrides.writeEnvFile(true)
+					}
+				} else { // non-config options
+					if err := processAppCustomOptions(service, k, v); err != nil {
+						return err
+					}
 				}
-				overrides.writeEnvFile(true)
 			}
+			// config := appConfig["config"]
+			// log.Debugf("Processing config: %v", config)
+			// if config != nil {
+			// 	configuration, err := getConfigMap(config)
+
+			// 	log.Debugf("Processing configuration: %v", configuration)
+			// 	if err != nil {
+			// 		return err
+			// 	}
+			// 	overrides := getEnvVarFile(service)
+
+			// 	log.Debugf("Processing overrides: %v", overrides)
+			// 	for env, value := range configuration {
+
+			// 		log.Debugf("Processing overrides setEnvVariable: %v %v", env, value)
+			// 		overrides.setEnvVariable(env, value)
+			// 	}
+			// 	overrides.writeEnvFile(true)
+			// }
 		}
 	}
 	return nil
