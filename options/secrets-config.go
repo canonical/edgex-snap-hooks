@@ -179,7 +179,7 @@ func SecurityProxyAddUser(jwtUsername, jwtUserID, jwtAlgorithm, jwtPublicKey str
 }
 
 // Set the TLS certificate. If a certificate has already been set then silently ignore the request
-func SecurityProxySetTLSCertificate(tlsCertificate, tlsPrivateKey, tlsSNI string) error {
+func SecurityProxySetTLSCertificate(tlsCertificate, tlsPrivateKey, tlsSNIs string) error {
 	_, err := securityProxyReadFile(tlsSemaphoreFile)
 	if err == nil {
 		log.Debug("The TLS certificate has already been set. To set it again, first set tls-certificate and tls-private-key to an empty string")
@@ -200,14 +200,15 @@ func SecurityProxySetTLSCertificate(tlsCertificate, tlsPrivateKey, tlsSNI string
 	}
 
 	args := []string{"proxy", "tls", "--incert", tlsCertFilename, "--inkey", tlsPrivateKeyFilename, "--admin_api_jwt", kongAdminToken}
-	if tlsSNI != "" {
-		args = append(args, "--snis", tlsSNI)
+	if tlsSNIs != "" {
+		args = append(args, "--snis", tlsSNIs)
 	}
-	err = securityProxyExecSecretsConfig(args)
 
+	err = securityProxyExecSecretsConfig(args)
 	if err != nil {
-		return fmt.Errorf("failed to set TLS certificate - %v", err)
+		return fmt.Errorf("failed to set TLS certificate: %s", err)
 	}
+
 	_, err = securityProxyWriteFile(tlsSemaphoreFile, "TLS certificate set")
 	if err != nil {
 		return err
@@ -216,9 +217,10 @@ func SecurityProxySetTLSCertificate(tlsCertificate, tlsPrivateKey, tlsSNI string
 	return nil
 }
 
-func validateSecretsConfigProxyOptions(proxyMap configOptions) error {
+func validateSecretsConfigProxyOptions(proxyMap configOptions, proxyObj proxyOptions) error {
+
 	// TODO
-	// flatten and validate
+	// flatten and reject unknown keys
 
 	// const (
 	// 	keyAdmin       = "admin"
@@ -244,13 +246,36 @@ func validateSecretsConfigProxyOptions(proxyMap configOptions) error {
 	// 		return fmt.Errorf("Unsupported secrets-config proxy key: %s", k)
 	// 	}
 	// }
+
+	// validate with object
+	o := &proxyObj
+
+	if (o.TLS.Cert != "" && o.TLS.Key == "") ||
+		(o.TLS.Cert == "" && o.TLS.Key != "") {
+		return fmt.Errorf("proxy cert and key must be set together")
+	}
+
+	if (o.TLS.Cert == "" || o.TLS.Key == "") && o.TLS.SNIs != "" {
+		return fmt.Errorf("proxy snis must be set together with proxy cert and key")
+	}
+
 	return nil
 }
 
 func processSecretsConfigProxyOptions(proxyMap configOptions) error {
 	log.Debugf("Processing secrets-config proxy: %v", proxyMap)
 
-	err := validateSecretsConfigProxyOptions(proxyMap)
+	b, err := json.Marshal(proxyMap)
+	if err != nil {
+		return fmt.Errorf("unexpected proxy marshal error: %s", err)
+	}
+	var proxy proxyOptions
+	err = json.Unmarshal(b, &proxy)
+	if err != nil {
+		return fmt.Errorf("unexpected proxy unmarshal error: %s", err)
+	}
+
+	err = validateSecretsConfigProxyOptions(proxyMap, proxy)
 	if err != nil {
 		return fmt.Errorf("error validating secrets-config proxy options: %s", err)
 	}
@@ -284,23 +309,13 @@ func processSecretsConfigProxyOptions(proxyMap configOptions) error {
 	// 	}
 	// }
 
-	b, err := json.Marshal(proxyMap)
-	if err != nil {
-		return fmt.Errorf("unexpected proxy marshal error: %s", err)
-	}
-	var proxyOptions proxyOptions
-	err = json.Unmarshal(b, &proxyOptions)
-	if err != nil {
-		return fmt.Errorf("unexpected proxy unmarshal error: %s", err)
-	}
-
 	// process the admin user
-	if proxyOptions.Admin.PublicKey != "" {
+	if proxy.Admin.PublicKey != "" {
 		if err := SecurityProxyAddUser(
 			defaultProxyUsername,
 			defaultProxyUserId,
 			defaultProxyUserAlgo,
-			proxyOptions.Admin.PublicKey); err != nil {
+			proxy.Admin.PublicKey); err != nil {
 			return fmt.Errorf("error adding user: %s", err)
 		}
 	} else {
@@ -321,11 +336,11 @@ func processSecretsConfigProxyOptions(proxyMap configOptions) error {
 	// }
 
 	// process TLS certificate
-	if proxyOptions.TLS.Cert != "" && proxyOptions.TLS.Key != "" {
+	if proxy.TLS.Cert != "" && proxy.TLS.Key != "" {
 		err := SecurityProxySetTLSCertificate(
-			proxyOptions.TLS.Cert,
-			proxyOptions.TLS.Key,
-			proxyOptions.TLS.SNIs)
+			proxy.TLS.Cert,
+			proxy.TLS.Key,
+			proxy.TLS.SNIs)
 		if err != nil {
 			return err
 		}
