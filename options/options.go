@@ -60,7 +60,7 @@ func processGlobalConfigOptions(services []string) error {
 
 	if options.Config == nil {
 		log.Debugf("No global configuration settings")
-		return nil
+		// return nil
 	}
 
 	configuration, err := getConfigMap(options.Config)
@@ -85,7 +85,6 @@ func migrateLegacyInternalOptions() error {
 		"env.security-bootstrapper.add-registry-acl-roles": "apps.security-bootstrapper.config.add-registry-acl-roles",
 	}
 
-	migrated := false
 	for k, v := range namespaceMap {
 		setting, err := snapctl.Get(k).Run()
 		if err != nil {
@@ -100,19 +99,13 @@ func migrateLegacyInternalOptions() error {
 				return err
 			}
 			log.Debugf("Migrated %s to %s", k, v)
-			migrated = true
-		}
-	}
-
-	if migrated {
-		if err := snapctl.Set("config.migrated", "true").Run(); err != nil {
-			return err
 		}
 	}
 
 	return nil
 }
 
+// Process the "apps.<app>.<my.option>" options, where <my.option> is not config
 func processAppCustomOptions(service, key string, value configOptions) error {
 	switch service {
 	case "secrets-config":
@@ -196,7 +189,7 @@ func ProcessAppConfig(services ...string) error {
 		return fmt.Errorf("empty service list")
 	}
 
-	configEnabled, err := snapctl.Get("config.enabled").Run()
+	configEnabled, err := snapctl.Get("config-enabled").Run()
 	if err != nil {
 		return err
 	}
@@ -215,9 +208,9 @@ func ProcessAppConfig(services ...string) error {
 			return err
 		}
 		if isSet(appsOptions) || isSet(globalOptions) {
-			return fmt.Errorf(`'config.' and 'app.' options are allowed only when config.enabled is true.
+			return fmt.Errorf(`'config.' and 'apps.' options are allowed only when config-enabled is true.
 
-Note: Setting config.enabled=true will unset existing 'env.' options and ignore future sets!! 
+Note: Setting config-enabled=true will unset existing 'env.' options and ignore future sets!! 
 
 Exception: The following legacy 'env.' options are automatically converted:
 	- env.security-secret-store.add-secretstore-tokens
@@ -225,6 +218,9 @@ Exception: The following legacy 'env.' options are automatically converted:
 	- env.security-bootstrapper.add-registry-acl-roles`)
 		} else {
 			// do nothing
+			log.Debug("No config options are set.")
+			// TODO
+			// flush left-over env files
 			return nil
 		}
 	}

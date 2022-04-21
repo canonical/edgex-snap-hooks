@@ -27,6 +27,7 @@ import (
 
 	hooks "github.com/canonical/edgex-snap-hooks/v2"
 	"github.com/canonical/edgex-snap-hooks/v2/env"
+	"github.com/canonical/edgex-snap-hooks/v2/log"
 	"github.com/canonical/edgex-snap-hooks/v2/options"
 	"github.com/canonical/edgex-snap-hooks/v2/snapctl"
 	"github.com/stretchr/testify/assert"
@@ -34,8 +35,9 @@ import (
 )
 
 const (
-	testService  = "test-service"
-	testService2 = "test-service2"
+	testService   = "test-service"
+	testService2  = "test-service2"
+	configEnabled = "config-enabled"
 )
 
 func TestProcessAppConfig(t *testing.T) {
@@ -48,8 +50,12 @@ func TestProcessAppConfig(t *testing.T) {
 	envFile2 := path.Join(configDir2, testService2+".env")
 	os.MkdirAll(configDir2, os.ModePerm)
 
+	require.NoError(t, snapctl.Set("debug", "true").Run())
+	log.Init()
+
 	t.Cleanup(func() {
 		assert.NoError(t, snapctl.Unset("apps", "config", "env").Run())
+		assert.NoError(t, snapctl.Unset("debug").Run())
 		assert.NoError(t, os.RemoveAll(configDir))
 		assert.NoError(t, os.RemoveAll(configDir2))
 	})
@@ -68,7 +74,27 @@ func TestProcessAppConfig(t *testing.T) {
 			assert.NoError(t, os.RemoveAll(envFile2))
 		})
 
+		t.Run("reject without enabling", func(t *testing.T) {
+			require.NoError(t, snapctl.Set(key, value).Run())
+
+			require.Error(t, options.ProcessAppConfig(testService, testService2))
+		})
+
 		t.Run("set", func(t *testing.T) {
+			require.NoError(t, snapctl.Set(configEnabled, "true").Run())
+			t.Cleanup(func() {
+				require.NoError(t, snapctl.Unset(configEnabled).Run())
+				require.NoError(t, snapctl.Unset("config").Run())
+
+				require.NoError(t, options.ProcessAppConfig(testService, testService2))
+
+				// it should be removed from both env files
+				require.Error(t, isInFile(envFile, "export X_Y=value"),
+					"File content:\n%s", readFile(envFile))
+				require.Error(t, isInFile(envFile2, "export X_Y=value"),
+					"File content:\n%s", readFile(envFile2))
+			})
+
 			require.NoError(t, snapctl.Set(key, value).Run())
 
 			require.NoError(t, options.ProcessAppConfig(testService, testService2))
@@ -81,15 +107,7 @@ func TestProcessAppConfig(t *testing.T) {
 		})
 
 		t.Run("unset", func(t *testing.T) {
-			require.NoError(t, snapctl.Unset(key, value).Run())
 
-			require.NoError(t, options.ProcessAppConfig(testService, testService2))
-
-			// it should be removed from both env files
-			require.Error(t, isInFile(envFile, "export X_Y=value"),
-				"File content:\n%s", readFile(envFile))
-			require.Error(t, isInFile(envFile2, "export X_Y=value"),
-				"File content:\n%s", readFile(envFile2))
 		})
 	})
 
@@ -102,6 +120,18 @@ func TestProcessAppConfig(t *testing.T) {
 		})
 
 		t.Run("set", func(t *testing.T) {
+			require.NoError(t, snapctl.Set(configEnabled, "true").Run())
+			t.Cleanup(func() {
+				require.NoError(t, snapctl.Unset("apps").Run())
+				require.NoError(t, snapctl.Unset(configEnabled).Run())
+
+				require.NoError(t, options.ProcessAppConfig(testService, testService2))
+
+				// it should be removed from the env file
+				require.Error(t, isInFile(envFile, "export X_Y=value"),
+					"File content:\n%s", readFile(envFile))
+			})
+
 			require.NoError(t, snapctl.Set(key, value).Run())
 
 			require.NoError(t, options.ProcessAppConfig(testService, testService2))
@@ -115,15 +145,15 @@ func TestProcessAppConfig(t *testing.T) {
 				"File content:\n%s", readFile(envFile2))
 		})
 
-		t.Run("unset", func(t *testing.T) {
-			require.NoError(t, snapctl.Unset(key, value).Run())
+		// t.Run("unset", func(t *testing.T) {
+		// 	require.NoError(t, snapctl.Unset(key, value).Run())
 
-			require.NoError(t, options.ProcessAppConfig(testService, testService2))
+		// 	require.NoError(t, options.ProcessAppConfig(testService, testService2))
 
-			// it should be removed from the env file
-			require.Error(t, isInFile(envFile, "export X_Y=value"),
-				"File content:\n%s", readFile(envFile))
-		})
+		// 	// it should be removed from the env file
+		// 	require.Error(t, isInFile(envFile, "export X_Y=value"),
+		// 		"File content:\n%s", readFile(envFile))
+		// })
 	})
 
 	t.Run("Set mixed legacy options", func(t *testing.T) {
@@ -138,6 +168,11 @@ func TestProcessAppConfig(t *testing.T) {
 			assert.NoError(t, snapctl.Unset(key).Run())
 		})
 		t.Run("set", func(t *testing.T) {
+			require.NoError(t, snapctl.Set(configEnabled, "true").Run())
+			t.Cleanup(func() {
+				assert.NoError(t, snapctl.Unset(configEnabled).Run())
+			})
+
 			require.NoError(t, snapctl.Set(legacyKey, legacyValue).Run())
 			require.NoError(t, options.ProcessAppConfig("security-bootstrapper"))
 			k, err := snapctl.Get(key).Run()
