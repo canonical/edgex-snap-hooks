@@ -228,25 +228,6 @@ func processAppConfigOptions(services []string) error {
 					}
 				}
 			}
-			// config := appConfig["config"]
-			// log.Debugf("Processing config: %v", config)
-			// if config != nil {
-			// 	configuration, err := getConfigMap(config)
-
-			// 	log.Debugf("Processing configuration: %v", configuration)
-			// 	if err != nil {
-			// 		return err
-			// 	}
-			// 	overrides := getEnvVarFile(service)
-
-			// 	log.Debugf("Processing overrides: %v", overrides)
-			// 	for env, value := range configuration {
-
-			// 		log.Debugf("Processing overrides setEnvVariable: %v %v", env, value)
-			// 		overrides.setEnvVariable(env, value)
-			// 	}
-			// 	overrides.writeEnvFile(true)
-			// }
 		}
 	}
 	return nil

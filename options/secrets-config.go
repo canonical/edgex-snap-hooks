@@ -123,13 +123,6 @@ func SecurityProxyDeleteCurrentUserIfSet() error {
 	}
 
 	args := []string{"proxy", "deluser", "--user", username, "--jwt", kongAdminToken}
-	// service := "security-proxy-setup"
-	// cmdSecretsConfig := exec.Command("secrets-config", args...)
-	// cmdSecretsConfig.Dir = fmt.Sprintf("%s/%s", env.SnapDataConf, service)
-	// out, err := cmdSecretsConfig.CombinedOutput()
-	// if err != nil {
-	// 	return fmt.Errorf("error executing secrets-config command: %s: %s", err, out)
-	// }
 	err = securityProxyExecSecretsConfig(args)
 	if err != nil {
 		return fmt.Errorf("error executing secrets-config command: %s", err)
@@ -223,9 +216,7 @@ func validateSecretsConfigProxyOptions(proxyMap configOptions, proxyObj proxyOpt
 	// flatten and reject unknown keys
 
 	// const (
-	// 	keyAdmin       = "admin"
 	// 	keyAdminPubKey = "admin.public-key"
-	// 	keyTLS         = "tls"
 	// 	keyTLSCert     = "tls.cert"
 	// 	keyTLSKey      = "tls.key"
 	// 	keyTLSSNIs     = "tls.snis"
@@ -280,35 +271,6 @@ func processSecretsConfigProxyOptions(proxyMap configOptions) error {
 		return fmt.Errorf("error validating secrets-config proxy options: %s", err)
 	}
 
-	// if jwtUsername == "" && jwtPublicKey == "" {
-	// 	// if the values have been set to "" then delete the current user
-	// 	options.SecurityProxyDeleteCurrentUserIfSet()
-	// } else if jwtUsername != "" && jwtPublicKey != "" {
-	// 	// else add a new user
-	// 	err = options.SecurityProxyAddUser(jwtUsername, jwtUserID, jwtAlgorithm, jwtPublicKey)
-	// 	if err != nil {
-	// 		return err
-	// 	}
-	// }
-
-	// // add/delete user
-	// adminPubKeyInt := proxyOptions[keyAdminPubKey]
-	// log.Debugf("Processing secrets-config proxy adminPubKeyInt: %v", adminPubKeyInt)
-	// if adminPubKeyInt != nil {
-	// 	adminPubKey, ok := adminPubKeyInt.(string)
-	// 	if !ok {
-	// 		return fmt.Errorf("%s is not a string: %v", keyUsersAdminPubKey, adminPubKeyInt)
-	// 	}
-
-	// 	if err := SecurityProxyAddUser(defaultUser, defaultId, defaultAlgo, adminPubKey); err != nil {
-	// 		return fmt.Errorf("Error adding user: %s", err)
-	// 	}
-	// } else {
-	// 	if err := SecurityProxyDeleteCurrentUserIfSet(); err != nil {
-	// 		return fmt.Errorf("Error deleting user: %s", err)
-	// 	}
-	// }
-
 	// process the admin user
 	if proxy.Admin.PublicKey != "" {
 		if err := SecurityProxyAddUser(
@@ -323,17 +285,6 @@ func processSecretsConfigProxyOptions(proxyMap configOptions) error {
 			return fmt.Errorf("error deleting user: %s", err)
 		}
 	}
-
-	// if tlsCertificate == "" && tlsPrivateKey == "" {
-	// 	// if the values have been set to "" then clear the semaphore so that a new cert can be set
-	// 	options.SecurityProxyDeleteCurrentTLSCertIfSet()
-	// } else if tlsCertificate != "" && tlsPrivateKey != "" {
-	// 	// Set the TLS certificate and private key
-	// 	err = options.SecurityProxySetTLSCertificate(tlsCertificate, tlsPrivateKey, tlsSNI)
-	// 	if err != nil {
-	// 		return err
-	// 	}
-	// }
 
 	// process TLS certificate
 	if proxy.TLS.Cert != "" && proxy.TLS.Key != "" {
