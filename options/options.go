@@ -189,16 +189,17 @@ func ProcessAppConfig(services ...string) error {
 		return fmt.Errorf("empty service list")
 	}
 
-	configEnabled, err := snapctl.Get("config-enabled").Run()
+	configEnabledStr, err := snapctl.Get("config-enabled").Run()
 	if err != nil {
 		return err
 	}
+	configEnabled := (configEnabledStr == "true")
 
 	isSet := func(v string) bool {
 		return !(v == "" || v == "{}")
 	}
 
-	if configEnabled != "true" {
+	if !configEnabled {
 		appsOptions, err := snapctl.Get("apps").Run()
 		if err != nil {
 			return err
@@ -217,10 +218,8 @@ Exception: The following legacy 'env.' options are automatically converted:
 	- env.security-secret-store.add-known-secrets
 	- env.security-bootstrapper.add-registry-acl-roles`)
 		} else {
-			// do nothing
 			log.Debug("No config options are set.")
-			// TODO
-			// flush left-over env files
+			// return and continue with legacy option handling.
 			return nil
 		}
 	}

@@ -80,19 +80,20 @@ func TestProcessAppConfig(t *testing.T) {
 			require.Error(t, options.ProcessAppConfig(testService, testService2))
 		})
 
-		t.Run("set", func(t *testing.T) {
+		t.Run("set/unset", func(t *testing.T) {
 			require.NoError(t, snapctl.Set(configEnabled, "true").Run())
 			t.Cleanup(func() {
-				require.NoError(t, snapctl.Unset(configEnabled).Run())
 				require.NoError(t, snapctl.Unset("config").Run())
-
 				require.NoError(t, options.ProcessAppConfig(testService, testService2))
+				// disable config after processing once, otherwise the env files won't get cleaned up
+				require.NoError(t, snapctl.Unset(configEnabled).Run())
 
 				// it should be removed from both env files
 				require.Error(t, isInFile(envFile, "export X_Y=value"),
 					"File content:\n%s", readFile(envFile))
 				require.Error(t, isInFile(envFile2, "export X_Y=value"),
 					"File content:\n%s", readFile(envFile2))
+
 			})
 
 			require.NoError(t, snapctl.Set(key, value).Run())
@@ -119,13 +120,13 @@ func TestProcessAppConfig(t *testing.T) {
 			assert.NoError(t, os.RemoveAll(envFile))
 		})
 
-		t.Run("set", func(t *testing.T) {
+		t.Run("set/unset", func(t *testing.T) {
 			require.NoError(t, snapctl.Set(configEnabled, "true").Run())
 			t.Cleanup(func() {
 				require.NoError(t, snapctl.Unset("apps").Run())
-				require.NoError(t, snapctl.Unset(configEnabled).Run())
-
 				require.NoError(t, options.ProcessAppConfig(testService, testService2))
+				// disable config after processing once, otherwise the env files won't get cleaned up
+				require.NoError(t, snapctl.Unset(configEnabled).Run())
 
 				// it should be removed from the env file
 				require.Error(t, isInFile(envFile, "export X_Y=value"),
@@ -144,16 +145,6 @@ func TestProcessAppConfig(t *testing.T) {
 			require.Error(t, isInFile(envFile2, "export X_Y=value"),
 				"File content:\n%s", readFile(envFile2))
 		})
-
-		// t.Run("unset", func(t *testing.T) {
-		// 	require.NoError(t, snapctl.Unset(key, value).Run())
-
-		// 	require.NoError(t, options.ProcessAppConfig(testService, testService2))
-
-		// 	// it should be removed from the env file
-		// 	require.Error(t, isInFile(envFile, "export X_Y=value"),
-		// 		"File content:\n%s", readFile(envFile))
-		// })
 	})
 
 	t.Run("Set mixed legacy options", func(t *testing.T) {
