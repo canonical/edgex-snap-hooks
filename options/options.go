@@ -22,6 +22,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/canonical/edgex-snap-hooks/v2/env"
 	"github.com/canonical/edgex-snap-hooks/v2/log"
 	"github.com/canonical/edgex-snap-hooks/v2/snapctl"
 )
@@ -61,6 +62,7 @@ func processGlobalConfigOptions(services []string) error {
 	if options.Config == nil {
 		log.Debugf("No global configuration settings")
 		// return nil
+		// continue to empty the files
 	}
 
 	configuration, err := getConfigMap(options.Config)
@@ -209,14 +211,18 @@ func ProcessAppConfig(services ...string) error {
 			return err
 		}
 		if isSet(appsOptions) || isSet(globalOptions) {
-			return fmt.Errorf(`'config.' and 'apps.' options are allowed only when config-enabled is true.
-
-Note: Setting config-enabled=true will unset existing 'env.' options and ignore future sets!! 
-
+			var migratable string
+			if env.SnapName == "edgexfoundry" {
+				migratable = `
 Exception: The following legacy 'env.' options are automatically converted:
 	- env.security-secret-store.add-secretstore-tokens
 	- env.security-secret-store.add-known-secrets
-	- env.security-bootstrapper.add-registry-acl-roles`)
+	- env.security-bootstrapper.add-registry-acl-roles`
+			}
+			return fmt.Errorf("'config.' and 'apps.' options are allowed only when config-enabled is true.\n\n%s%s",
+				"WARNING: Setting config-enabled=true will unset existing 'env.' options and ignore future sets!!",
+				migratable)
+
 		} else {
 			log.Debug("No config options are set.")
 			// return and continue with legacy option handling.
