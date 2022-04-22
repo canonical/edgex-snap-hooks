@@ -117,6 +117,37 @@ func processAppCustomOptions(service, key string, value configOptions) error {
 	}
 }
 
+// Process the "apps.<app>.<custom.option>" where <custom.option> is not "config"
+func ProcessAppCustomOptions(service string) error {
+	var options snapOptions
+
+	// get the 'apps' json structure
+	jsonString, err := snapctl.Get("apps").Document().Run()
+	if err != nil {
+		return err
+	}
+	err = json.Unmarshal([]byte(jsonString), &options)
+	if err != nil {
+		return err
+	}
+
+	log.Debugf("Processing custom options for service: %s", service)
+
+	appOptions := options.Apps[service]
+	log.Debugf("Processing custom options: %v", appOptions)
+	if appOptions != nil {
+		for k, v := range appOptions {
+			if k != "config" {
+				if err := processAppCustomOptions(service, k, v); err != nil {
+					return err
+				}
+			}
+		}
+	}
+
+	return nil
+}
+
 // Process the "apps.<app>.config.<my.env.var>" configuration
 //	-> setting env var MY_ENV_VAR for an app
 func processAppConfigOptions(services []string) error {
@@ -165,10 +196,6 @@ func processAppConfigOptions(services []string) error {
 						}
 						overrides.writeEnvFile(true)
 					}
-				} else { // non-config options
-					if err := processAppCustomOptions(service, k, v); err != nil {
-						return err
-					}
 				}
 			}
 		}
@@ -196,6 +223,8 @@ func ProcessAppConfig(services ...string) error {
 		return err
 	}
 	configEnabled := (configEnabledStr == "true")
+
+	log.Infof("Processing apps.* and config.* options: %t", configEnabled)
 
 	isSet := func(v string) bool {
 		return !(v == "" || v == "{}")
