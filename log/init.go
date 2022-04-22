@@ -13,10 +13,10 @@ var (
 )
 
 func init() {
-	initialize()
+	Init()
 }
 
-func initialize() {
+func Init() {
 	value, err := exec.Command("snapctl", "get", "debug").CombinedOutput()
 	if err != nil {
 		stderr(err)

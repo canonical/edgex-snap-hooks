@@ -43,8 +43,10 @@ func getEnvVarFile(service string) *envVarOverrides {
 
 func (e *envVarOverrides) setEnvVariable(setting string, value string) error {
 	result := strings.ToUpper(setting)
-	result = strings.Replace(result, "-", "", -1)
-	result = strings.Replace(result, ".", "_", -1)
+	// replace - with _ for keys such as add-known-secrets and edgex-startup-duration
+	result = strings.ReplaceAll(result, "-", "_")
+	// replace . with _ for config file overrides such as service.port
+	result = strings.ReplaceAll(result, ".", "_")
 	log.Infof("Mapping %s to %s", setting, result)
 	_, err := fmt.Fprintf(e.buffer, "export %s=%s\n", result, value)
 	return err
@@ -74,7 +76,7 @@ func (e *envVarOverrides) writeEnvFile(append bool) error {
 	}
 	buf.Write(e.buffer.Bytes())
 
-	log.Infof("Writing settings to %s", e.filename)
+	log.Infof("Writing settings to %s: %s", e.filename, strings.ReplaceAll(e.buffer.String(), "\n", " "))
 
 	tmp := e.filename + ".tmp"
 	err := ioutil.WriteFile(tmp, buf.Bytes(), 0644)
