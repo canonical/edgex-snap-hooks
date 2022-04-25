@@ -72,7 +72,9 @@ func processGlobalConfigOptions(services []string) error {
 	for _, service := range services {
 		overrides := getEnvVarFile(service)
 		for env, value := range configuration {
-			overrides.setEnvVariable(env, value)
+			if err := overrides.setEnvVariable(env, value); err != nil {
+				return err
+			}
 		}
 		overrides.writeEnvFile(false)
 	}
@@ -192,7 +194,9 @@ func processAppConfigOptions(services []string) error {
 						for env, value := range configuration {
 
 							log.Debugf("Processing overrides setEnvVariable: %v=%v", env, value)
-							overrides.setEnvVariable(env, value)
+							if err := overrides.setEnvVariable(env, value); err != nil {
+								return err
+							}
 						}
 						overrides.writeEnvFile(true)
 					}

@@ -41,15 +41,22 @@ func getEnvVarFile(service string) *envVarOverrides {
 	return &env
 }
 
-func (e *envVarOverrides) setEnvVariable(setting string, value string) error {
-	result := strings.ToUpper(setting)
-	// replace - with _ for keys such as add-known-secrets and edgex-startup-duration
-	result = strings.ReplaceAll(result, "-", "_")
-	// replace . with _ for config file overrides such as service.port
-	result = strings.ReplaceAll(result, ".", "_")
-	log.Infof("Mapping %s to %s", setting, result)
-	_, err := fmt.Fprintf(e.buffer, "export %s=%s\n", result, value)
+func (e *envVarOverrides) setEnvVariable(key string, value string) error {
+	envKey, err := configKeyToEnvVar(key)
+	if err != nil {
+		return fmt.Errorf("error converting config key to environment variable key: %s", err)
+	}
+	log.Infof("Mapping %s to %s", key, envKey)
+	_, err = fmt.Fprintf(e.buffer, "export %s=%s\n", envKey, value)
 	return err
+}
+
+// convert my-var to MY_VAR
+func configKeyToEnvVar(configKey string) (string, error) {
+	if strings.Contains(configKey, ".") {
+		return "", fmt.Errorf("config key must not contain dots: %s", configKey)
+	}
+	return strings.ReplaceAll(strings.ToUpper(configKey), "-", "_"), nil
 }
 
 func (e *envVarOverrides) getEnvFilename() string {
