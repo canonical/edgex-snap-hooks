@@ -44,7 +44,7 @@ func getEnvVarFile(service string) *envVarOverrides {
 func (e *envVarOverrides) setEnvVariable(key string, value string) error {
 	envKey, err := configKeyToEnvVar(key)
 	if err != nil {
-		return fmt.Errorf("Error converting config key to environment variable key: %s", err)
+		return fmt.Errorf("error converting config key to environment variable key: %s", err)
 	}
 	log.Infof("Mapping %s to %s", key, envKey)
 	_, err = fmt.Fprintf(e.buffer, "export %s=%s\n", envKey, value)
