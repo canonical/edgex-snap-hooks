@@ -65,7 +65,7 @@ func TestProcessAppConfig(t *testing.T) {
 	})
 
 	t.Run("global options", func(t *testing.T) {
-		const key, value = "config.x.y", "value"
+		const key, value = "config.x-y", "value"
 
 		t.Cleanup(func() {
 			assert.NoError(t, snapctl.Unset(key).Run())
@@ -80,7 +80,7 @@ func TestProcessAppConfig(t *testing.T) {
 			require.Error(t, options.ProcessAppConfig(testService, testService2))
 		})
 
-		t.Run("set/unset", func(t *testing.T) {
+		t.Run("set+unset", func(t *testing.T) {
 			require.NoError(t, snapctl.Set(configEnabled, "true").Run())
 			t.Cleanup(func() {
 				require.NoError(t, snapctl.Unset("config").Run())
@@ -113,14 +113,14 @@ func TestProcessAppConfig(t *testing.T) {
 	})
 
 	t.Run("single app options", func(t *testing.T) {
-		const key, value = "apps." + testService + ".config.x.y", "value"
+		const key, value = "apps." + testService + ".config.x-y", "value"
 
 		t.Cleanup(func() {
 			assert.NoError(t, snapctl.Unset(key).Run())
 			assert.NoError(t, os.RemoveAll(envFile))
 		})
 
-		t.Run("set/unset", func(t *testing.T) {
+		t.Run("set+unset", func(t *testing.T) {
 			require.NoError(t, snapctl.Set(configEnabled, "true").Run())
 			t.Cleanup(func() {
 				require.NoError(t, snapctl.Unset("apps").Run())
@@ -176,7 +176,7 @@ func TestProcessAppConfig(t *testing.T) {
 	t.Run("reject mixed legacy options", func(t *testing.T) {
 		const (
 			legacyKey, legacyValue = "env.core-data.service.host", "legacy"
-			key, value             = "apps.core-data.config.x.y", "value"
+			key, value             = "apps.core-data.config.x-y", "value"
 		)
 
 		configCoreDataDir := fmt.Sprintf("%s/core-data/res/", env.SnapDataConf)
