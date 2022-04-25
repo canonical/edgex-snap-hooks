@@ -47,7 +47,7 @@ func (e *envVarOverrides) setEnvVariable(key string, value string) error {
 		return fmt.Errorf("error converting config key to environment variable key: %s", err)
 	}
 	log.Infof("Mapping %s to %s", key, envKey)
-	_, err = fmt.Fprintf(e.buffer, "export %s=%s\n", envKey, value)
+	_, err = fmt.Fprintf(e.buffer, "export %s=\"%s\"\n", envKey, value)
 	return err
 }
 
