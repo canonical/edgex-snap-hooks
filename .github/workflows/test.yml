@@ -1,10 +1,10 @@
 name: Test
 
 on:
-#   push:
-#     branches: [ master ]
+  push:
+    branches: [ main ]
   pull_request:
-    branches: [ master ]
+    branches: [ main ]
   # allow running manually
   workflow_dispatch:
 

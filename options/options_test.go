@@ -35,12 +35,14 @@ import (
 )
 
 const (
-	testService   = "test-service"
-	testService2  = "test-service2"
-	configEnabled = "config-enabled"
+	testService  = "test-service"
+	testService2 = "test-service2"
+	appOptions   = "app-options"
 )
 
 func TestProcessAppConfig(t *testing.T) {
+	// uncomment to cleanup previous mess
+	// assert.NoError(t, snapctl.Unset("app-options", "config-enabled", "apps", "config").Run())
 
 	configDir := fmt.Sprintf("%s/%s/res/", env.SnapDataConf, testService)
 	envFile := path.Join(configDir, testService+".env")
@@ -81,12 +83,12 @@ func TestProcessAppConfig(t *testing.T) {
 		})
 
 		t.Run("set+unset", func(t *testing.T) {
-			require.NoError(t, snapctl.Set(configEnabled, "true").Run())
+			require.NoError(t, snapctl.Set(appOptions, "true").Run())
 			t.Cleanup(func() {
 				require.NoError(t, snapctl.Unset("config").Run())
 				require.NoError(t, options.ProcessAppConfig(testService, testService2))
 				// disable config after processing once, otherwise the env files won't get cleaned up
-				require.NoError(t, snapctl.Unset(configEnabled).Run())
+				require.NoError(t, snapctl.Unset(appOptions).Run())
 
 				// it should be removed from both env files
 				require.Error(t, isInFile(envFile, "export X_Y=value"),
@@ -101,9 +103,9 @@ func TestProcessAppConfig(t *testing.T) {
 			require.NoError(t, options.ProcessAppConfig(testService, testService2))
 
 			// both env files should have it
-			require.NoError(t, isInFile(envFile, "export X_Y=value"),
+			require.NoError(t, isInFile(envFile, `export X_Y="value"`),
 				"File content:\n%s", readFile(envFile))
-			require.NoError(t, isInFile(envFile2, "export X_Y=value"),
+			require.NoError(t, isInFile(envFile2, `export X_Y="value"`),
 				"File content:\n%s", readFile(envFile2))
 		})
 
@@ -116,20 +118,20 @@ func TestProcessAppConfig(t *testing.T) {
 		const key, value = "apps." + testService + ".config.x-y", "value"
 
 		t.Cleanup(func() {
-			assert.NoError(t, snapctl.Unset(key).Run())
+			assert.NoError(t, snapctl.Unset("apps").Run())
 			assert.NoError(t, os.RemoveAll(envFile))
 		})
 
 		t.Run("set+unset", func(t *testing.T) {
-			require.NoError(t, snapctl.Set(configEnabled, "true").Run())
+			require.NoError(t, snapctl.Set(appOptions, "true").Run())
 			t.Cleanup(func() {
 				require.NoError(t, snapctl.Unset("apps").Run())
 				require.NoError(t, options.ProcessAppConfig(testService, testService2))
 				// disable config after processing once, otherwise the env files won't get cleaned up
-				require.NoError(t, snapctl.Unset(configEnabled).Run())
+				require.NoError(t, snapctl.Unset(appOptions).Run())
 
 				// it should be removed from the env file
-				require.Error(t, isInFile(envFile, "export X_Y=value"),
+				require.Error(t, isInFile(envFile, `export X_Y="value"`),
 					"File content:\n%s", readFile(envFile))
 			})
 
@@ -138,11 +140,11 @@ func TestProcessAppConfig(t *testing.T) {
 			require.NoError(t, options.ProcessAppConfig(testService, testService2))
 
 			// first env file should have it
-			require.NoError(t, isInFile(envFile, "export X_Y=value"),
+			require.NoError(t, isInFile(envFile, `export X_Y="value"`),
 				"File content:\n%s", readFile(envFile))
 
 			// second env file should NOT have it
-			require.Error(t, isInFile(envFile2, "export X_Y=value"),
+			require.Error(t, isInFile(envFile2, `export X_Y="value"`),
 				"File content:\n%s", readFile(envFile2))
 		})
 	})
@@ -158,19 +160,17 @@ func TestProcessAppConfig(t *testing.T) {
 			assert.NoError(t, snapctl.Unset(legacyKey).Run())
 			assert.NoError(t, snapctl.Unset(key).Run())
 		})
-		t.Run("set", func(t *testing.T) {
-			require.NoError(t, snapctl.Set(configEnabled, "true").Run())
-			t.Cleanup(func() {
-				assert.NoError(t, snapctl.Unset(configEnabled).Run())
-			})
 
-			require.NoError(t, snapctl.Set(legacyKey, legacyValue).Run())
-			require.NoError(t, options.ProcessAppConfig("security-bootstrapper"))
-			k, err := snapctl.Get(key).Run()
-			require.Equal(t, k, value)
-			require.NoError(t, err)
-
+		require.NoError(t, snapctl.Set(appOptions, "true").Run())
+		t.Cleanup(func() {
+			assert.NoError(t, snapctl.Unset(appOptions).Run())
 		})
+
+		require.NoError(t, snapctl.Set(legacyKey, legacyValue).Run())
+		require.NoError(t, options.ProcessAppConfig("security-bootstrapper"))
+		k, err := snapctl.Get(key).Run()
+		require.Equal(t, k, value)
+		require.NoError(t, err)
 	})
 
 	t.Run("reject mixed legacy options", func(t *testing.T) {
@@ -180,25 +180,22 @@ func TestProcessAppConfig(t *testing.T) {
 		)
 
 		configCoreDataDir := fmt.Sprintf("%s/core-data/res/", env.SnapDataConf)
-		// envFileCoreData := path.Join(configCoreDataDir, "core-data.env")
+		envFileCoreData := path.Join(configCoreDataDir, "core-data.env")
 		os.MkdirAll(configCoreDataDir, os.ModePerm)
 
 		t.Cleanup(func() {
 			assert.NoError(t, snapctl.Unset(legacyKey).Run())
 			assert.NoError(t, snapctl.Unset(key).Run())
 
-			assert.NoError(t, os.RemoveAll(envFile))
-			assert.NoError(t, os.RemoveAll(configDir2))
+			assert.NoError(t, os.RemoveAll(envFileCoreData))
+			assert.NoError(t, os.RemoveAll(configCoreDataDir))
 		})
 
-		t.Run("set", func(t *testing.T) {
-			require.NoError(t, snapctl.Set(legacyKey, legacyValue).Run())
-			require.NoError(t, snapctl.Set(key, value).Run())
+		require.NoError(t, snapctl.Set(legacyKey, legacyValue).Run())
+		require.NoError(t, snapctl.Set(key, value).Run())
 
-			require.NoError(t, applyLegacyOptions("core-data"))
-			require.Error(t, options.ProcessAppConfig(testService, "core-data"))
-		})
-
+		require.NoError(t, applyLegacyOptions("core-data"))
+		require.Error(t, options.ProcessAppConfig(testService, "core-data"))
 	})
 
 }
