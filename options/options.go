@@ -222,19 +222,29 @@ func ProcessAppConfig(services ...string) error {
 		return fmt.Errorf("empty service list")
 	}
 
+	appOptionsStr, err := snapctl.Get("app-options").Run()
+	if err != nil {
+		return err
+	}
+	appOptions := (appOptionsStr == "true")
+
+	// Obsolete option from beta.
+	// Remove after the release of snaps and tests.
 	configEnabledStr, err := snapctl.Get("config-enabled").Run()
 	if err != nil {
 		return err
 	}
-	configEnabled := (configEnabledStr == "true")
+	if configEnabledStr == "true" {
+		appOptions = true
+	}
 
-	log.Infof("Processing apps.* and config.* options: %t", configEnabled)
+	log.Infof("Processing app options: %t", appOptions)
 
 	isSet := func(v string) bool {
 		return !(v == "" || v == "{}")
 	}
 
-	if !configEnabled {
+	if !appOptions {
 		appsOptions, err := snapctl.Get("apps").Run()
 		if err != nil {
 			return err
@@ -247,17 +257,17 @@ func ProcessAppConfig(services ...string) error {
 			var migratable string
 			if env.SnapName == "edgexfoundry" {
 				migratable = `
-Exception: The following legacy 'env.' options are automatically converted:
+Exception: The following legacy env options are automatically converted:
 	- env.security-secret-store.add-secretstore-tokens
 	- env.security-secret-store.add-known-secrets
 	- env.security-bootstrapper.add-registry-acl-roles`
 			}
-			return fmt.Errorf("'config.' and 'apps.' options are allowed only when config-enabled is true.\n\n%s%s",
-				"WARNING: Setting config-enabled=true will unset existing 'env.' options and ignore future sets!!",
+			return fmt.Errorf("app options (prefix `apps.' or 'config.') are allowed only when app-options is true.\n\n%s%s",
+				"WARNING: Setting app-options=true will unset existing env options and ignore future sets!!",
 				migratable)
 
 		} else {
-			log.Debug("No config options are set.")
+			log.Debug("No app options are set.")
 			// return and continue with legacy option handling.
 			return nil
 		}
