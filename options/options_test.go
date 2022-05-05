@@ -35,12 +35,14 @@ import (
 )
 
 const (
-	testService   = "test-service"
-	testService2  = "test-service2"
-	configEnabled = "config-enabled"
+	testService  = "test-service"
+	testService2 = "test-service2"
+	appOptions   = "app-options"
 )
 
 func TestProcessAppConfig(t *testing.T) {
+	// uncomment to cleanup previous mess
+	// assert.NoError(t, snapctl.Unset("app-options", "config-enabled", "apps", "config").Run())
 
 	configDir := fmt.Sprintf("%s/%s/res/", env.SnapDataConf, testService)
 	envFile := path.Join(configDir, testService+".env")
@@ -81,12 +83,12 @@ func TestProcessAppConfig(t *testing.T) {
 		})
 
 		t.Run("set+unset", func(t *testing.T) {
-			require.NoError(t, snapctl.Set(configEnabled, "true").Run())
+			require.NoError(t, snapctl.Set(appOptions, "true").Run())
 			t.Cleanup(func() {
 				require.NoError(t, snapctl.Unset("config").Run())
 				require.NoError(t, options.ProcessAppConfig(testService, testService2))
 				// disable config after processing once, otherwise the env files won't get cleaned up
-				require.NoError(t, snapctl.Unset(configEnabled).Run())
+				require.NoError(t, snapctl.Unset(appOptions).Run())
 
 				// it should be removed from both env files
 				require.Error(t, isInFile(envFile, "export X_Y=value"),
@@ -121,12 +123,12 @@ func TestProcessAppConfig(t *testing.T) {
 		})
 
 		t.Run("set+unset", func(t *testing.T) {
-			require.NoError(t, snapctl.Set(configEnabled, "true").Run())
+			require.NoError(t, snapctl.Set(appOptions, "true").Run())
 			t.Cleanup(func() {
 				require.NoError(t, snapctl.Unset("apps").Run())
 				require.NoError(t, options.ProcessAppConfig(testService, testService2))
 				// disable config after processing once, otherwise the env files won't get cleaned up
-				require.NoError(t, snapctl.Unset(configEnabled).Run())
+				require.NoError(t, snapctl.Unset(appOptions).Run())
 
 				// it should be removed from the env file
 				require.Error(t, isInFile(envFile, `export X_Y="value"`),
@@ -159,9 +161,9 @@ func TestProcessAppConfig(t *testing.T) {
 			assert.NoError(t, snapctl.Unset(key).Run())
 		})
 
-		require.NoError(t, snapctl.Set(configEnabled, "true").Run())
+		require.NoError(t, snapctl.Set(appOptions, "true").Run())
 		t.Cleanup(func() {
-			assert.NoError(t, snapctl.Unset(configEnabled).Run())
+			assert.NoError(t, snapctl.Unset(appOptions).Run())
 		})
 
 		require.NoError(t, snapctl.Set(legacyKey, legacyValue).Run())
