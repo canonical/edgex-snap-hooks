@@ -150,6 +150,24 @@ func ProcessAppCustomOptions(service string) error {
 	return nil
 }
 
+func validateAppConfigOptions(configOptions map[string]map[string]configOptions, expectedServices []string) error {
+	// make sure that set services in options are one of the expected services
+	expected := make(map[string]bool)
+	for _, s := range expectedServices {
+		expected[s] = true
+	}
+
+	for setService := range configOptions {
+		if !expected[setService] {
+			return fmt.Errorf("unsupported service in app config option: %s. Supported services are: %v",
+				setService,
+				expectedServices,
+			)
+		}
+	}
+	return nil
+}
+
 // Process the "apps.<app>.config.<my.env.var>" configuration
 //	-> setting env var MY_ENV_VAR for an app
 func processAppConfigOptions(services []string) error {
@@ -165,8 +183,10 @@ func processAppConfigOptions(services []string) error {
 		return err
 	}
 
-	// TODO
-	// reject unknown servies
+	err = validateAppConfigOptions(options.Apps, services)
+	if err != nil {
+		return err
+	}
 
 	// iterate through the known services in this snap
 	for _, service := range services {
