@@ -198,6 +198,21 @@ func TestProcessAppConfig(t *testing.T) {
 		require.Error(t, options.ProcessAppConfig(testService, "core-data"))
 	})
 
+	t.Run("reject unknown app", func(t *testing.T) {
+		const key, value = "apps.unknown.config.x-y", "value"
+
+		require.NoError(t, snapctl.Set(appOptions, "true").Run())
+		require.NoError(t, snapctl.Set(key, value).Run())
+		t.Cleanup(func() {
+			assert.NoError(t, snapctl.Unset(appOptions).Run())
+			assert.NoError(t, snapctl.Unset(key).Run())
+		})
+
+		err := options.ProcessAppConfig(testService, "core-data")
+		assert.Error(t, err)
+		require.Contains(t, err.Error(), "unsupported")
+
+	})
 }
 
 // utility testing functions
