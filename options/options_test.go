@@ -70,7 +70,7 @@ func TestProcessAppConfig(t *testing.T) {
 		const key, value = "config.x-y", "value"
 
 		t.Cleanup(func() {
-			assert.NoError(t, snapctl.Unset(key).Run())
+			assert.NoError(t, snapctl.Unset("config").Run())
 
 			assert.NoError(t, os.RemoveAll(envFile))
 			assert.NoError(t, os.RemoveAll(envFile2))
@@ -151,26 +151,18 @@ func TestProcessAppConfig(t *testing.T) {
 
 	t.Run("Set mixed legacy options", func(t *testing.T) {
 		const (
-			legacyKey, legacyValue = "env.security-bootstrapper.add-registry-acl-roles", "legacy1,legacy2"
-			key, value             = "apps.security-bootstrapper.config.add-registry-acl-roles", "legacy1,legacy2"
+			legacyKey, legacyValue = "env." + testService + ".x", "legacyValue"
+			key, value             = "apps." + testService + ".config.x", "value"
 		)
 
 		t.Cleanup(func() {
-			//			assert.NoError(t, snapctl.Unset("env").Run())
-			assert.NoError(t, snapctl.Unset(legacyKey).Run())
-			assert.NoError(t, snapctl.Unset(key).Run())
+			assert.NoError(t, snapctl.Unset("env", "apps", appOptions).Run())
 		})
 
 		require.NoError(t, snapctl.Set(appOptions, "true").Run())
-		t.Cleanup(func() {
-			assert.NoError(t, snapctl.Unset(appOptions).Run())
-		})
 
 		require.NoError(t, snapctl.Set(legacyKey, legacyValue).Run())
-		require.NoError(t, options.ProcessAppConfig("security-bootstrapper"))
-		k, err := snapctl.Get(key).Run()
-		require.Equal(t, k, value)
-		require.NoError(t, err)
+		require.NoError(t, options.ProcessAppConfig(testService))
 	})
 
 	t.Run("reject mixed legacy options", func(t *testing.T) {
@@ -186,6 +178,7 @@ func TestProcessAppConfig(t *testing.T) {
 		t.Cleanup(func() {
 			assert.NoError(t, snapctl.Unset(legacyKey).Run())
 			assert.NoError(t, snapctl.Unset(key).Run())
+			require.NoError(t, snapctl.Unset("apps").Run())
 
 			assert.NoError(t, os.RemoveAll(envFileCoreData))
 			assert.NoError(t, os.RemoveAll(configCoreDataDir))
@@ -206,12 +199,44 @@ func TestProcessAppConfig(t *testing.T) {
 		t.Cleanup(func() {
 			assert.NoError(t, snapctl.Unset(appOptions).Run())
 			assert.NoError(t, snapctl.Unset(key).Run())
+			require.NoError(t, snapctl.Unset("apps").Run())
 		})
 
 		err := options.ProcessAppConfig(testService, "core-data")
 		assert.Error(t, err)
 		require.Contains(t, err.Error(), "unsupported")
 
+	})
+
+	t.Run("reject bad keys", func(t *testing.T) {
+		const app = "test-service"
+		const key, value = "apps." + app + ".config.x-y", "value"
+
+		require.NoError(t, snapctl.Set(appOptions, "true").Run())
+
+		t.Cleanup(func() {
+			require.NoError(t, snapctl.Unset("apps").Run())
+			require.NoError(t, options.ProcessAppConfig(app))
+			// disable config after processing once, otherwise the env files won't get cleaned up
+			require.NoError(t, snapctl.Unset(appOptions).Run())
+		})
+
+		require.NoError(t, snapctl.Set(key, value).Run())
+		require.NoError(t, options.ProcessAppConfig(app))
+
+		// env file should have the X_Y
+		require.NoError(t, isInFile(envFile, `export X_Y="value"`),
+			"File content:\n%s", readFile(envFile))
+
+		// set something bad
+		require.NoError(t, snapctl.Set("apps."+app+".config.dots.disallowed", value).Run())
+		require.Error(t, options.ProcessAppConfig(app))
+
+		// env file should still have the X_Y
+		require.Error(t, isInFile(envFile, `export DOTS_DISALLOWED="value"`),
+			"File content:\n%s", readFile(envFile))
+		require.NoError(t, isInFile(envFile, `export X_Y="value"`),
+			"File content:\n%s", readFile(envFile))
 	})
 }
 

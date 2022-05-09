@@ -47,7 +47,7 @@ func getConfigMap(config map[string]interface{}) (map[string]string, error) {
 
 // Process the "config.<my.env.var>" configuration
 //	 -> setting env variable for all apps (e.g. DEBUG=true, SERVICE_SERVERBINDADDRESS=0.0.0.0)
-func processGlobalConfigOptions(services []string) error {
+func (cp *configProcessor) processGlobalConfigOptions(services []string) error {
 	var options snapOptions
 
 	jsonString, err := snapctl.Get("config").Document().Run()
@@ -60,9 +60,8 @@ func processGlobalConfigOptions(services []string) error {
 	}
 
 	if options.Config == nil {
-		log.Debugf("No global configuration settings")
-		// return nil
-		// continue to empty the files
+		log.Debugf("No global config options")
+		return nil
 	}
 
 	configuration, err := getConfigMap(options.Config)
@@ -70,13 +69,12 @@ func processGlobalConfigOptions(services []string) error {
 		return err
 	}
 	for _, service := range services {
-		overrides := getEnvVarFile(service)
 		for env, value := range configuration {
-			if err := overrides.setEnvVariable(env, value); err != nil {
+			log.Debugf("Processing globally set env var for %s: %v=%v", service, env, value)
+			if err := cp.addEnvVar(service, env, value); err != nil {
 				return err
 			}
 		}
-		overrides.writeEnvFile(false)
 	}
 	return nil
 }
@@ -170,7 +168,7 @@ func validateAppConfigOptions(configOptions map[string]map[string]configOptions,
 
 // Process the "apps.<app>.config.<my.env.var>" configuration
 //	-> setting env var MY_ENV_VAR for an app
-func processAppConfigOptions(services []string) error {
+func (cp *configProcessor) processAppConfigOptions(services []string) error {
 	var options snapOptions
 
 	// get the 'apps' json structure
@@ -204,21 +202,16 @@ func processAppConfigOptions(services []string) error {
 					if config != nil {
 						configuration, err := getConfigMap(config)
 
-						log.Debugf("Processing configuration: %v", configuration)
+						log.Debugf("Processing flattened config: %v", configuration)
 						if err != nil {
 							return err
 						}
-						overrides := getEnvVarFile(service)
-
-						log.Debugf("Processing overrides: %v", overrides)
 						for env, value := range configuration {
-
-							log.Debugf("Processing overrides setEnvVariable: %v=%v", env, value)
-							if err := overrides.setEnvVariable(env, value); err != nil {
+							log.Debugf("Processing config option for %s: %v=%v", service, env, value)
+							if err := cp.addEnvVar(service, env, value); err != nil {
 								return err
 							}
 						}
-						overrides.writeEnvFile(true)
 					}
 				}
 			}
@@ -238,6 +231,9 @@ func processAppConfigOptions(services []string) error {
 // b) snap set edgex-snap-name config.<my.env.var>
 //	-> sets env variable for all apps (e.g. DEBUG=true, SERVICE_SERVERBINDADDRESS=0.0.0.0)
 func ProcessAppConfig(services ...string) error {
+	// uncomment to enable snap debugging
+	// snapctl.Set("debug", "true")
+
 	if len(services) == 0 {
 		return fmt.Errorf("empty service list")
 	}
@@ -264,6 +260,11 @@ func ProcessAppConfig(services ...string) error {
 		return !(v == "" || v == "{}")
 	}
 
+	envOptions, err := snapctl.Get("env").Run()
+	if err != nil {
+		return err
+	}
+
 	if !appOptions {
 		appsOptions, err := snapctl.Get("apps").Run()
 		if err != nil {
@@ -277,42 +278,52 @@ func ProcessAppConfig(services ...string) error {
 			var migratable string
 			if env.SnapName == "edgexfoundry" {
 				migratable = `
-Exception: The following legacy env options are automatically converted:
+Exception: The following internally set env options are automatically migrated:
 	- env.security-secret-store.add-secretstore-tokens
 	- env.security-secret-store.add-known-secrets
-	- env.security-bootstrapper.add-registry-acl-roles`
+	- env.security-bootstrapper.add-registry-acl-roles
+Note: Disabling app-options WILL NOT revert the migration!`
 			}
 			return fmt.Errorf("app options (prefix `apps.' or 'config.') are allowed only when app-options is true.\n\n%s%s",
-				"WARNING: Setting app-options=true will unset existing env options and ignore future sets!!",
+				"WARNING: Setting app-options=true WILL UNSET existing env options and ignore future sets!!",
 				migratable)
 
-		} else {
-			log.Debug("No app options are set.")
-			// return and continue with legacy option handling.
+		} else if isSet(envOptions) {
+			// return and continue with legacy option handling
 			return nil
+		} else {
+			// no app options or env options are set
+			// continue to cleanup previously set env vars from files
+			log.Debug("No app options are set.")
 		}
 	}
 
-	err = migrateLegacyInternalOptions()
-	if err != nil {
+	if isSet(envOptions) {
+		if err := migrateLegacyInternalOptions(); err != nil {
+			return err
+		}
+
+		// It is important to unset any options to avoid conflicts in
+		// 	deprecated configure hook processing
+		if err := snapctl.Unset("env").Run(); err != nil {
+			return err
+		}
+		log.Info("Unset all 'env.' options.")
+	}
+
+	cp := newConfigProcessor(services)
+
+	// process app-specific options
+	if err := cp.processGlobalConfigOptions(services); err != nil {
 		return err
 	}
 
-	// It is important to unset any options to avoid conflicts in
-	// 	deprecated configure hook processing
-	if err := snapctl.Unset("env").Run(); err != nil {
-		return err
-	}
-	log.Info("Unset all 'env.' options.")
-
-	if err := processGlobalConfigOptions(services); err != nil {
+	// process global options
+	if err := cp.processAppConfigOptions(services); err != nil {
 		return err
 	}
 
-	// The app-specific options have higher precedence.
-	// They should be processed last to end up at the bottom of the .env file
-	// 	and override global environment variables.
-	if err := processAppConfigOptions(services); err != nil {
+	if err := cp.writeEnvFiles(); err != nil {
 		return err
 	}
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Canonical Ltd
+ * Copyright (C) 2022 Canonical Ltd
  *
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  *  in compliance with the License. You may obtain a copy of the License at
@@ -19,7 +19,6 @@ package options
 import (
 	"bytes"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"strings"
 
@@ -27,73 +26,77 @@ import (
 	"github.com/canonical/edgex-snap-hooks/v2/log"
 )
 
-type envVarOverrides struct {
-	service  string
-	filename string
-	buffer   *bytes.Buffer
+type configProcessor struct {
+	appEnvVars map[string]map[string]string
 }
 
-func getEnvVarFile(service string) *envVarOverrides {
-	env := envVarOverrides{}
-	env.service = service
-	env.filename = env.getEnvFilename()
-	env.buffer = &bytes.Buffer{}
-	return &env
+func newConfigProcessor(apps []string) *configProcessor {
+	var cp configProcessor
+	cp.appEnvVars = make(map[string]map[string]string)
+	for _, app := range apps {
+		cp.appEnvVars[app] = make(map[string]string)
+	}
+	return &cp
 }
 
-func (e *envVarOverrides) setEnvVariable(key string, value string) error {
-	envKey, err := configKeyToEnvVar(key)
+// add app's env var to memory
+func (cp *configProcessor) addEnvVar(app, key, value string) error {
+	envKey, err := cp.configKeyToEnvVar(key)
 	if err != nil {
 		return fmt.Errorf("error converting config key to environment variable key: %s", err)
 	}
 	log.Infof("Mapping %s to %s", key, envKey)
-	_, err = fmt.Fprintf(e.buffer, "export %s=\"%s\"\n", envKey, value)
+	cp.appEnvVars[app][envKey] = value
 	return err
 }
 
 // convert my-var to MY_VAR
-func configKeyToEnvVar(configKey string) (string, error) {
+func (cp *configProcessor) configKeyToEnvVar(configKey string) (string, error) {
 	if strings.Contains(configKey, ".") {
 		return "", fmt.Errorf("config key must not contain dots: %s", configKey)
 	}
 	return strings.ReplaceAll(strings.ToUpper(configKey), "-", "_"), nil
 }
 
-func (e *envVarOverrides) getEnvFilename() string {
-
+// returns the suitable env file name for the service
+func (cp *configProcessor) filename(service string) string {
 	// The app-service-configurable snap is the one outlier snap that doesn't
 	// include the service name in it's configuration path.
 	var path string
 	if env.SnapName == "edgex-app-service-configurable" {
-		path = fmt.Sprintf("%s/res/%s.env", env.SnapDataConf, e.service)
+		path = fmt.Sprintf("%s/res/%s.env", env.SnapDataConf, service)
 	} else {
-		path = fmt.Sprintf("%s/%s/res/%s.env", env.SnapDataConf, e.service, e.service)
+		path = fmt.Sprintf("%s/%s/res/%s.env", env.SnapDataConf, service, service)
 	}
 	return path
 }
 
-func (e *envVarOverrides) writeEnvFile(append bool) error {
-	buf := bytes.Buffer{}
+func (cp *configProcessor) writeEnvFiles() error {
+	for app, envVars := range cp.appEnvVars {
+		var buffer bytes.Buffer
+		filename := cp.filename(app)
 
-	if append {
-		current, err := ioutil.ReadFile(e.filename)
-		if err == nil {
-			buf.Write(current)
+		// add env vars to buffer
+		for k, v := range envVars {
+			// Invalid .env files created and processed by snaps:
+			// https://github.com/canonical/edgex-snap-hooks/issues/52
+			if _, err := fmt.Fprintf(&buffer, "export %s=\"%s\"\n", k, v); err != nil {
+				return err
+			}
 		}
-	}
-	buf.Write(e.buffer.Bytes())
 
-	log.Infof("Writing settings to %s: %s", e.filename, strings.ReplaceAll(e.buffer.String(), "\n", " "))
+		log.Infof("Writing to env file %s: %s", filename, strings.ReplaceAll(buffer.String(), "\n", " "))
 
-	tmp := e.filename + ".tmp"
-	err := ioutil.WriteFile(tmp, buf.Bytes(), 0644)
-	if err != nil {
-		return fmt.Errorf("failed to write %s  - %v", tmp, err)
-	}
+		tmp := filename + ".tmp"
+		err := os.WriteFile(tmp, buffer.Bytes(), 0644)
+		if err != nil {
+			return fmt.Errorf("failed to write %s  - %v", tmp, err)
+		}
 
-	err = os.Rename(tmp, e.filename)
-	if err != nil {
-		return fmt.Errorf("failed to rename %s to %s:%v", tmp, e.filename, err)
+		err = os.Rename(tmp, filename)
+		if err != nil {
+			return fmt.Errorf("failed to rename %s to %s:%v", tmp, filename, err)
+		}
 	}
 
 	return nil
