@@ -157,13 +157,16 @@ func validateAppConfigOptions(configOptions map[string]map[string]configOptions,
 		expected[s] = true
 	}
 
-	for setService := range configOptions {
-		if !expected[setService] {
+	for setService, value := range configOptions {
+		_, isConfig := value["config"]
+
+		if isConfig && !expected[setService] {
 			return fmt.Errorf("unsupported service in app config option: %s. Supported services are: %v",
 				setService,
 				expectedServices,
 			)
 		}
+
 	}
 	return nil
 }
