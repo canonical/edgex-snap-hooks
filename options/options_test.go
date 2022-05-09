@@ -70,7 +70,7 @@ func TestProcessAppConfig(t *testing.T) {
 		const key, value = "config.x-y", "value"
 
 		t.Cleanup(func() {
-			assert.NoError(t, snapctl.Unset(key).Run())
+			assert.NoError(t, snapctl.Unset("config").Run())
 
 			assert.NoError(t, os.RemoveAll(envFile))
 			assert.NoError(t, os.RemoveAll(envFile2))
@@ -151,26 +151,18 @@ func TestProcessAppConfig(t *testing.T) {
 
 	t.Run("Set mixed legacy options", func(t *testing.T) {
 		const (
-			legacyKey, legacyValue = "env.security-bootstrapper.add-registry-acl-roles", "legacy1,legacy2"
-			key, value             = "apps.security-bootstrapper.config.add-registry-acl-roles", "legacy1,legacy2"
+			legacyKey, legacyValue = "env." + testService + ".x", "legacyValue"
+			key, value             = "apps." + testService + ".config.x", "value"
 		)
 
 		t.Cleanup(func() {
-			//			assert.NoError(t, snapctl.Unset("env").Run())
-			assert.NoError(t, snapctl.Unset(legacyKey).Run())
-			assert.NoError(t, snapctl.Unset(key).Run())
+			assert.NoError(t, snapctl.Unset("env", "apps", appOptions).Run())
 		})
 
 		require.NoError(t, snapctl.Set(appOptions, "true").Run())
-		t.Cleanup(func() {
-			assert.NoError(t, snapctl.Unset(appOptions).Run())
-		})
 
 		require.NoError(t, snapctl.Set(legacyKey, legacyValue).Run())
-		require.NoError(t, options.ProcessAppConfig("security-bootstrapper"))
-		k, err := snapctl.Get(key).Run()
-		require.Equal(t, k, value)
-		require.NoError(t, err)
+		require.NoError(t, options.ProcessAppConfig(testService))
 	})
 
 	t.Run("reject mixed legacy options", func(t *testing.T) {
