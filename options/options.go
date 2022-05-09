@@ -287,13 +287,13 @@ Exception: The following legacy env options are automatically converted:
 				"WARNING: Setting app-options=true will unset existing env options and ignore future sets!!",
 				migratable)
 
+		} else if isSet(envOptions) {
+			// return and continue with legacy option handling
+			return nil
 		} else {
+			// no app options or env options are set
+			// continue to cleanup previously set env vars from files
 			log.Debug("No app options are set.")
-			if isSet(envOptions) {
-				// return and continue with legacy option handling.
-				return nil
-			}
-			// continue to cleanup previously set env vars
 		}
 	}
 
@@ -301,14 +301,14 @@ Exception: The following legacy env options are automatically converted:
 		if err := migrateLegacyInternalOptions(); err != nil {
 			return err
 		}
-	}
 
-	// It is important to unset any options to avoid conflicts in
-	// 	deprecated configure hook processing
-	if err := snapctl.Unset("env").Run(); err != nil {
-		return err
+		// It is important to unset any options to avoid conflicts in
+		// 	deprecated configure hook processing
+		if err := snapctl.Unset("env").Run(); err != nil {
+			return err
+		}
+		log.Info("Unset all 'env.' options.")
 	}
-	log.Info("Unset all 'env.' options.")
 
 	cp := newConfigProcessor(services)
 
