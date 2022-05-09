@@ -278,13 +278,14 @@ func ProcessAppConfig(services ...string) error {
 			var migratable string
 			if env.SnapName == "edgexfoundry" {
 				migratable = `
-Exception: The following legacy env options are automatically converted:
+Exception: The following internally set env options are automatically migrated:
 	- env.security-secret-store.add-secretstore-tokens
 	- env.security-secret-store.add-known-secrets
-	- env.security-bootstrapper.add-registry-acl-roles`
+	- env.security-bootstrapper.add-registry-acl-roles
+Note: Disabling app-options WILL NOT revert the migration!`
 			}
 			return fmt.Errorf("app options (prefix `apps.' or 'config.') are allowed only when app-options is true.\n\n%s%s",
-				"WARNING: Setting app-options=true will unset existing env options and ignore future sets!!",
+				"WARNING: Setting app-options=true WILL UNSET existing env options and ignore future sets!!",
 				migratable)
 
 		} else if isSet(envOptions) {
