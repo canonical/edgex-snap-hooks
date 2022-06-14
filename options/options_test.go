@@ -91,9 +91,9 @@ func TestProcessAppConfig(t *testing.T) {
 				require.NoError(t, snapctl.Unset(appOptions).Run())
 
 				// it should be removed from both env files
-				require.Error(t, isInFile(envFile, "export X_Y=value"),
+				require.Error(t, isInFile(envFile, "X_Y=value"),
 					"File content:\n%s", readFile(envFile))
-				require.Error(t, isInFile(envFile2, "export X_Y=value"),
+				require.Error(t, isInFile(envFile2, "X_Y=value"),
 					"File content:\n%s", readFile(envFile2))
 
 			})
@@ -103,9 +103,9 @@ func TestProcessAppConfig(t *testing.T) {
 			require.NoError(t, options.ProcessAppConfig(testService, testService2))
 
 			// both env files should have it
-			require.NoError(t, isInFile(envFile, `export X_Y="value"`),
+			require.NoError(t, isInFile(envFile, `X_Y="value"`),
 				"File content:\n%s", readFile(envFile))
-			require.NoError(t, isInFile(envFile2, `export X_Y="value"`),
+			require.NoError(t, isInFile(envFile2, `X_Y="value"`),
 				"File content:\n%s", readFile(envFile2))
 		})
 
@@ -131,7 +131,7 @@ func TestProcessAppConfig(t *testing.T) {
 				require.NoError(t, snapctl.Unset(appOptions).Run())
 
 				// it should be removed from the env file
-				require.Error(t, isInFile(envFile, `export X_Y="value"`),
+				require.Error(t, isInFile(envFile, `X_Y="value"`),
 					"File content:\n%s", readFile(envFile))
 			})
 
@@ -140,11 +140,11 @@ func TestProcessAppConfig(t *testing.T) {
 			require.NoError(t, options.ProcessAppConfig(testService, testService2))
 
 			// first env file should have it
-			require.NoError(t, isInFile(envFile, `export X_Y="value"`),
+			require.NoError(t, isInFile(envFile, `X_Y="value"`),
 				"File content:\n%s", readFile(envFile))
 
 			// second env file should NOT have it
-			require.Error(t, isInFile(envFile2, `export X_Y="value"`),
+			require.Error(t, isInFile(envFile2, `X_Y="value"`),
 				"File content:\n%s", readFile(envFile2))
 		})
 	})
@@ -225,7 +225,7 @@ func TestProcessAppConfig(t *testing.T) {
 		require.NoError(t, options.ProcessAppConfig(app))
 
 		// env file should have the X_Y
-		require.NoError(t, isInFile(envFile, `export X_Y="value"`),
+		require.NoError(t, isInFile(envFile, `X_Y="value"`),
 			"File content:\n%s", readFile(envFile))
 
 		// set something bad
@@ -233,9 +233,9 @@ func TestProcessAppConfig(t *testing.T) {
 		require.Error(t, options.ProcessAppConfig(app))
 
 		// env file should still have the X_Y
-		require.Error(t, isInFile(envFile, `export DOTS_DISALLOWED="value"`),
+		require.Error(t, isInFile(envFile, `DOTS_DISALLOWED="value"`),
 			"File content:\n%s", readFile(envFile))
-		require.NoError(t, isInFile(envFile, `export X_Y="value"`),
+		require.NoError(t, isInFile(envFile, `X_Y="value"`),
 			"File content:\n%s", readFile(envFile))
 	})
 }
