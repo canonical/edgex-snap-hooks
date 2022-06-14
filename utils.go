@@ -514,7 +514,7 @@ func HandleEdgeXConfig(service, envJSON string, extraConf map[string]string) err
 			continue
 		}
 
-		_, err := fmt.Fprintf(&b, "%s=%s\n", envNoPrefix, v)
+		_, err := fmt.Fprintf(&b, "export %s=%s\n", envNoPrefix, v)
 		if err != nil {
 			return err
 		}
