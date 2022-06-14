@@ -80,7 +80,7 @@ func (cp *configProcessor) writeEnvFiles() error {
 		for k, v := range envVars {
 			// Invalid .env files created and processed by snaps:
 			// https://github.com/canonical/edgex-snap-hooks/issues/52
-			if _, err := fmt.Fprintf(&buffer, "export %s=\"%s\"\n", k, v); err != nil {
+			if _, err := fmt.Fprintf(&buffer, "%s=\"%s\"\n", k, v); err != nil {
 				return err
 			}
 		}
