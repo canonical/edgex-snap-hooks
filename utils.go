@@ -108,11 +108,18 @@ func CopyDir(srcPath string, dstPath string) error {
 		dstfp := path.Join(dstPath, fd.Name())
 
 		if fd.IsDir() {
-			if err = CopyDir(srcfp, dstfp); err != nil {
+			err = CopyDir(srcfp, dstfp)
+			if err != nil {
 				return err
+			} else {
+				err = os.Chmod(dstfp, 0755)
+				if err != nil {
+					return err
+				}
 			}
 		} else {
-			if err = CopyFile(srcfp, dstfp); err != nil {
+			err = CopyFile(srcfp, dstfp)
+			if err != nil {
 				return err
 			}
 		}
