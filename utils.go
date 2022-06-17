@@ -27,6 +27,7 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
+	"path"
 	"regexp"
 	"strconv"
 	"strings"
@@ -79,6 +80,43 @@ func CopyFile(srcPath, destPath string) error {
 		return err
 	}
 
+	return nil
+}
+
+// CopyDir copies a whole directory recursively
+// snippet from https://blog.depa.do/post/copy-files-and-directories-in-go
+func CopyDir(srcPath string, dstPath string) error {
+	var err error
+	var fds []os.FileInfo
+	var srcinfo os.FileInfo
+
+	srcinfo, err = os.Stat(srcPath)
+	if err != nil {
+		return err
+	}
+
+	err = os.MkdirAll(dstPath, srcinfo.Mode())
+	if err != nil {
+		return err
+	}
+
+	if fds, err = ioutil.ReadDir(srcPath); err != nil {
+		return err
+	}
+	for _, fd := range fds {
+		srcfp := path.Join(srcPath, fd.Name())
+		dstfp := path.Join(srcPath, fd.Name())
+
+		if fd.IsDir() {
+			if err = CopyDir(srcfp, dstfp); err != nil {
+				return err
+			}
+		} else {
+			if err = CopyFile(srcfp, dstfp); err != nil {
+				return err
+			}
+		}
+	}
 	return nil
 }
 
