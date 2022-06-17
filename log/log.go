@@ -69,6 +69,20 @@ func Errorf(format string, a ...interface{}) {
 	Error(fmt.Sprintf(format, a...))
 }
 
+// Fatal calls Error followed by os.Exit(1).
+// It formats similar to fmt.Sprint
+func Fatal(a ...interface{}) {
+	Error(a...)
+	os.Exit(1)
+}
+
+// Fatalf calls Errorf followed by os.Exit(1).
+// It formats similar to fmt.Sprintf
+func Fatalf(format string, a ...interface{}) {
+	Errorf(format, a...)
+	os.Exit(1)
+}
+
 // Info writes the given input to syslog (sev=LOG_INFO).
 // It formats similar to fmt.Sprint
 func Info(a ...interface{}) {
