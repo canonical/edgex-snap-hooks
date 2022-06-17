@@ -105,7 +105,7 @@ func CopyDir(srcPath string, dstPath string) error {
 	}
 	for _, fd := range fds {
 		srcfp := path.Join(srcPath, fd.Name())
-		dstfp := path.Join(srcPath, fd.Name())
+		dstfp := path.Join(dstPath, fd.Name())
 
 		if fd.IsDir() {
 			if err = CopyDir(srcfp, dstfp); err != nil {
