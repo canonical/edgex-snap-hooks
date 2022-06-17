@@ -111,11 +111,10 @@ func CopyDir(srcPath string, dstPath string) error {
 			err = CopyDir(srcfp, dstfp)
 			if err != nil {
 				return err
-			} else {
-				err = os.Chmod(dstfp, 0755)
-				if err != nil {
-					return err
-				}
+			}
+			err = os.Chmod(dstfp, 0755)
+			if err != nil {
+				return err
 			}
 		} else {
 			err = CopyFile(srcfp, dstfp)
