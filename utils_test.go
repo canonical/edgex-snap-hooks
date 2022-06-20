@@ -147,3 +147,28 @@ func getConfigValue(t *testing.T, key string) string {
 	require.NoError(t, err, "Error getting config value via snapctl.")
 	return strings.TrimSpace(string(out))
 }
+
+func TestCopyFile(t *testing.T) {
+	tmpdir := t.TempDir()
+	tmpfile, _ := os.CreateTemp(tmpdir, "tmpSrcFile")
+	srcPath := tmpfile.Name()
+
+	tmpdir = t.TempDir()
+	tmpfile, _ = os.CreateTemp(tmpdir, "tmpDstFile")
+	dstPath := tmpfile.Name()
+
+	require.NoError(t, CopyFile(srcPath, dstPath), "Error copying file.")
+}
+
+func TestCopyDir(t *testing.T) {
+	tmpdir := t.TempDir()
+	tmpSrcDir, _ := os.MkdirTemp(tmpdir, "tmpSrcDir")
+	os.CreateTemp(tmpSrcDir, "tmpSrcFile1")
+	os.CreateTemp(tmpSrcDir, "tmpSrcFile2")
+	os.CreateTemp(tmpSrcDir, "tmpSrcFile3")
+
+	tmpdir = t.TempDir()
+	tmpDstDir, _ := os.MkdirTemp(tmpdir, "tmpDstDir")
+
+	require.NoError(t, CopyDir(tmpSrcDir, tmpDstDir), "Error copying directory.")
+}
