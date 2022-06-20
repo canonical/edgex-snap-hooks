@@ -88,7 +88,7 @@ sudo edgex-snap-hooks.test ./snapctl -run TestGet
 
 #### Development
 ```
-make try
+SNAPCRAFT_BUILD_ENVIRONMENT=lxd make try
 ```
 
 You can now edit the files locally, copy them to prime directory, and re-run the
