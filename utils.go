@@ -96,6 +96,7 @@ func CopyDir(srcPath string, dstPath string) error {
 		return err
 	}
 
+	// Temporarily change the process umask to allow creating directory with rwx permissions.
 	oldMask := syscall.Umask(0)
 	defer syscall.Umask(oldMask)
 
