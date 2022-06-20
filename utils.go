@@ -31,6 +31,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"syscall"
 
 	"github.com/canonical/edgex-snap-hooks/v2/log"
 	"github.com/canonical/edgex-snap-hooks/v2/options"
@@ -95,6 +96,9 @@ func CopyDir(srcPath string, dstPath string) error {
 		return err
 	}
 
+	oldMask := syscall.Umask(0)
+	defer syscall.Umask(oldMask)
+
 	err = os.MkdirAll(dstPath, srcinfo.Mode())
 	if err != nil {
 		return err
@@ -109,10 +113,6 @@ func CopyDir(srcPath string, dstPath string) error {
 
 		if fd.IsDir() {
 			err = CopyDir(srcfp, dstfp)
-			if err != nil {
-				return err
-			}
-			err = os.Chmod(dstfp, 0755)
 			if err != nil {
 				return err
 			}
