@@ -20,9 +20,12 @@ package hooks
 
 import (
 	"fmt"
+	"io/fs"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
+	"syscall"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -150,25 +153,43 @@ func getConfigValue(t *testing.T, key string) string {
 
 func TestCopyFile(t *testing.T) {
 	tmpdir := t.TempDir()
-	tmpfile, _ := os.CreateTemp(tmpdir, "tmpSrcFile")
+	tmpfile, err := os.CreateTemp(tmpdir, "tmpSrcFile")
+	require.NoError(t, err)
 	srcPath := tmpfile.Name()
 
 	tmpdir = t.TempDir()
-	tmpfile, _ = os.CreateTemp(tmpdir, "tmpDstFile")
+	tmpfile, err = os.CreateTemp(tmpdir, "tmpDstFile")
+	require.NoError(t, err)
 	dstPath := tmpfile.Name()
 
 	require.NoError(t, CopyFile(srcPath, dstPath), "Error copying file.")
 }
 
 func TestCopyDir(t *testing.T) {
-	tmpdir := t.TempDir()
-	tmpSrcDir, _ := os.MkdirTemp(tmpdir, "tmpSrcDir")
-	os.CreateTemp(tmpSrcDir, "tmpSrcFile1")
-	os.CreateTemp(tmpSrcDir, "tmpSrcFile2")
-	os.CreateTemp(tmpSrcDir, "tmpSrcFile3")
+	tmpSrcDir, err := os.MkdirTemp(t.TempDir(), "tmpSrcDir")
+	require.NoError(t, err)
+	tmpSrcChildDir, err := os.MkdirTemp(tmpSrcDir, "tmpSrcChildDir")
+	require.NoError(t, err)
+	_, err = os.CreateTemp(tmpSrcDir, "tmpSrcFile")
+	require.NoError(t, err)
 
-	tmpdir = t.TempDir()
-	tmpDstDir, _ := os.MkdirTemp(tmpdir, "tmpDstDir")
+	// Set a umask that allow only read perm for the directory
+	// This is to test the umask change in CopyDir
+	oldMask := syscall.Umask(3)
+	defer syscall.Umask(oldMask)
+
+	// change the perm
+	err = os.Chmod(tmpSrcChildDir, 0755)
+	require.NoError(t, err)
+
+	tmpDstDir, err := os.MkdirTemp(t.TempDir(), "tmpDstDir")
+	t.Log(tmpDstDir)
+	require.NoError(t, err)
 
 	require.NoError(t, CopyDir(tmpSrcDir, tmpDstDir), "Error copying directory.")
+
+	// check the perm
+	dirInfo, err := os.Stat(tmpDstDir + "/" + filepath.Base(tmpSrcChildDir))
+	require.NoError(t, err)
+	require.Equal(t, fs.FileMode(fs.ModeDir|0755).String(), dirInfo.Mode().String())
 }
