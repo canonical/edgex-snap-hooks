@@ -27,11 +27,9 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
-	"path"
 	"regexp"
 	"strconv"
 	"strings"
-	"syscall"
 
 	"github.com/canonical/edgex-snap-hooks/v2/log"
 )
@@ -55,9 +53,11 @@ var (
 	SnapRev string
 )
 
+// Deprecated
 // CtlCli is the test obj for overridding functions
 type CtlCli struct{}
 
+// Deprecated
 // SnapCtl interface provides abstration for unit testing
 type SnapCtl interface {
 	Config(key string) (string, error)
@@ -65,8 +65,6 @@ type SnapCtl interface {
 	UnsetConfig(key string) error
 	Stop(svc string, disable bool) error
 }
-
-
 
 // Deprecated: use log.Debug or log.Debugf
 func Debug(msg string) {
@@ -139,11 +137,13 @@ func init() {
 	}
 }
 
+// Deprecated
 // NewSnapCtl returns a normal runtime client
 func NewSnapCtl() *CtlCli {
 	return &CtlCli{}
 }
 
+// Deprecated
 // Config uses snapctl to get a value from a key, or returns error.
 func (cc *CtlCli) Config(key string) (string, error) {
 	output, err := exec.Command("snapctl", "get", key).CombinedOutput()
@@ -153,6 +153,7 @@ func (cc *CtlCli) Config(key string) (string, error) {
 	return strings.TrimSpace(string(output)), nil
 }
 
+// Deprecated
 // SetConfig uses snapctl to set a config value from a key, or returns error.
 func (cc *CtlCli) SetConfig(key string, val string) error {
 	output, err := exec.Command("snapctl", "set", fmt.Sprintf("%s=%s", key, val)).CombinedOutput()
@@ -162,6 +163,7 @@ func (cc *CtlCli) SetConfig(key string, val string) error {
 	return nil
 }
 
+// Deprecated
 // UnsetConfig uses snapctl to unset a config value from a key
 func (cc *CtlCli) UnsetConfig(key string) error {
 	output, err := exec.Command("snapctl", "unset", key).CombinedOutput()
@@ -171,6 +173,7 @@ func (cc *CtlCli) UnsetConfig(key string) error {
 	return nil
 }
 
+// Deprecated
 // Start uses snapctrl to start a service and optionally enable it
 func (cc *CtlCli) Start(svc string, enable bool) error {
 	var cmd *exec.Cmd
@@ -190,6 +193,7 @@ func (cc *CtlCli) Start(svc string, enable bool) error {
 	return nil
 }
 
+// Deprecated
 // StartMultiple uses snapctl to start one or more services and optionally enable all
 func (cc *CtlCli) StartMultiple(enable bool, services ...string) error {
 	if len(services) == 0 {
@@ -214,6 +218,7 @@ func (cc *CtlCli) StartMultiple(enable bool, services ...string) error {
 	return nil
 }
 
+// Deprecated
 // Stop uses snapctrl to stop a service and optionally disable it
 func (cc *CtlCli) Stop(svc string, disable bool) error {
 	var cmd *exec.Cmd
@@ -233,6 +238,7 @@ func (cc *CtlCli) Stop(svc string, disable bool) error {
 	return nil
 }
 
+// Deprecated
 // service status object
 type service struct {
 	name    string
@@ -241,6 +247,7 @@ type service struct {
 	notes   string
 }
 
+// Deprecated
 // services uses snapctl to get the list of services
 func (cc *CtlCli) services() ([]service, error) {
 
@@ -285,6 +292,7 @@ func (cc *CtlCli) services() ([]service, error) {
 	return services, nil
 }
 
+// Deprecated
 // EnabledServices uses snapctl to get the list of enabled services
 func (cc *CtlCli) EnabledServices() ([]string, error) {
 	services, err := cc.services()
@@ -302,6 +310,7 @@ func (cc *CtlCli) EnabledServices() ([]string, error) {
 	return enabledServices, nil
 }
 
+// Deprecated
 // p is the current prefix of the config key being processed (e.g. "service", "security.auth")
 // k is the key name of the current JSON object being processed
 // vJSON is the current object
@@ -497,6 +506,8 @@ func securityProxySetTLSCertificate(tlsCertificate, tlsPrivateKey, tlsSNI string
 	Info("New TLS Certificate and private key set")
 	return nil
 }
+
+// Deprecated
 // This func checks the given key for a service-specific prefix
 // delimited by a '/'. The prefix can either be a service name or a
 // CSV service list. If found, the prefix is compared against
@@ -521,6 +532,7 @@ func checkForServiceSpecificKey(k, service string) (bool, string) {
 	return true, noPrefixEnv
 }
 
+// Deprecated
 func getConfigEnvVar(k string, extraConf map[string]string) (string, bool) {
 	var env string
 
@@ -539,6 +551,7 @@ func getConfigEnvVar(k string, extraConf map[string]string) (string, bool) {
 	return env, false
 }
 
+// Deprecated
 // HandleEdgeXConfig processes snap configuration which can be used to override
 // edgexfoundry configuration via environment variables sourced by the snap
 // service wrapper script. The parameter service is used to create a new service
