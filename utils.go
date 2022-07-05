@@ -34,6 +34,7 @@ import (
 	"github.com/canonical/edgex-snap-hooks/v2/log"
 )
 
+// Deprecated: use the env package
 var (
 	// Snap contains the value of the SNAP environment variable.
 	Snap string
@@ -86,6 +87,7 @@ func Warn(msg string) {
 	log.Warn(msg)
 }
 
+// Deprecated
 // getEnvVars populates global variables for each of the SNAP*
 // variables defined in the snap's environment
 func getEnvVars() error {

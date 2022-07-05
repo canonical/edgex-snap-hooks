@@ -17,13 +17,11 @@
 package hooks
 
 func TestCopyFile(t *testing.T) {
-	tmpdir := t.TempDir()
-	tmpfile, err := os.CreateTemp(tmpdir, "tmpSrcFile")
+	tmpfile, err := os.CreateTemp(t.TempDir(), "tmpSrcFile")
 	require.NoError(t, err)
 	srcPath := tmpfile.Name()
 
-	tmpdir = t.TempDir()
-	tmpfile, err = os.CreateTemp(tmpdir, "tmpDstFile")
+	tmpfile, err = os.CreateTemp(t.TempDir(), "tmpDstFile")
 	require.NoError(t, err)
 	dstPath := tmpfile.Name()
 
