@@ -103,19 +103,9 @@ func securityProxyExecSecretsConfig(args []string) error {
 	return nil
 }
 
-// Deprecated
-func SecurityProxyDeleteCurrentTLSCertIfSet() error {
-	return securityProxyDeleteCurrentTLSCertIfSet()
-}
-
 // Remove the semaphore, so that we can set the certificate again
 func securityProxyDeleteCurrentTLSCertIfSet() error {
 	return securityProxyRemoveSemaphore(tlsSemaphoreFile)
-}
-
-// Deprecated
-func SecurityProxyDeleteCurrentUserIfSet() error {
-	return securityProxyDeleteCurrentUserIfSet()
 }
 
 // Delete the current user - if one has been set up
@@ -142,11 +132,6 @@ func securityProxyDeleteCurrentUserIfSet() error {
 	// log.Debug("Executed \"secrets-config " + fmt.Sprint(args) + "\" result=" + string(out))
 	log.Info("proxy: Removed current user")
 	return nil
-}
-
-// Deprecated
-func SecurityProxyAddUser(jwtUsername, jwtUserID, jwtAlgorithm, jwtPublicKey string) error {
-	return securityProxyAddUser(jwtUsername, jwtUserID, jwtAlgorithm, jwtPublicKey)
 }
 
 // Set up the proxy with the specified user.
@@ -184,11 +169,6 @@ func securityProxyAddUser(jwtUsername, jwtUserID, jwtAlgorithm, jwtPublicKey str
 	}
 	log.Info("proxy: Added new user")
 	return nil
-}
-
-// Deprecated
-func SecurityProxySetTLSCertificate(tlsCertificate, tlsPrivateKey, tlsSNIs string) error {
-	return securityProxySetTLSCertificate(tlsCertificate, tlsPrivateKey, tlsSNIs)
 }
 
 // Set the TLS certificate. If a certificate has already been set then silently ignore the request
@@ -293,7 +273,7 @@ func processSecretsConfigProxyOptions(proxyMap configOptions) error {
 
 	// process the admin user
 	if proxy.Admin.PublicKey != "" {
-		if err := SecurityProxyAddUser(
+		if err := securityProxyAddUser(
 			defaultProxyUsername,
 			defaultProxyUserId,
 			defaultProxyUserAlgo,
@@ -301,14 +281,14 @@ func processSecretsConfigProxyOptions(proxyMap configOptions) error {
 			return fmt.Errorf("error adding user: %s", err)
 		}
 	} else {
-		if err := SecurityProxyDeleteCurrentUserIfSet(); err != nil {
+		if err := securityProxyDeleteCurrentUserIfSet(); err != nil {
 			return fmt.Errorf("error deleting user: %s", err)
 		}
 	}
 
 	// process TLS certificate
 	if proxy.TLS.Cert != "" && proxy.TLS.Key != "" {
-		err := SecurityProxySetTLSCertificate(
+		err := securityProxySetTLSCertificate(
 			proxy.TLS.Cert,
 			proxy.TLS.Key,
 			proxy.TLS.SNIs)
@@ -316,7 +296,7 @@ func processSecretsConfigProxyOptions(proxyMap configOptions) error {
 			return err
 		}
 	} else {
-		SecurityProxyDeleteCurrentTLSCertIfSet()
+		securityProxyDeleteCurrentTLSCertIfSet()
 	}
 
 	return nil
