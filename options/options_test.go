@@ -30,6 +30,7 @@ import (
 	"github.com/canonical/edgex-snap-hooks/v2/log"
 	"github.com/canonical/edgex-snap-hooks/v2/options"
 	"github.com/canonical/edgex-snap-hooks/v2/snapctl"
+	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -242,7 +243,24 @@ func TestProcessAppConfig(t *testing.T) {
 
 // utility testing functions
 
+func isFileExist(file string) (bool, error) {
+	_, err := os.Stat(file)
+	if err == nil {
+		return true, nil
+	}
+	if errors.Is(err, os.ErrNotExist) {
+		// file does not exist
+		return false, nil
+	}
+	return false, err
+}
+
 func isInFile(file string, line string) error {
+	// check if the file exist first
+	isExist, err := isFileExist(file)
+	if isExist == false && line != "" {
+		return fmt.Errorf("%s is not in %s because the file does not exist\n", line, file)
+	}
 	// read the whole file at once
 	b, err := os.ReadFile(file)
 	if err != nil {
@@ -258,7 +276,10 @@ func isInFile(file string, line string) error {
 
 func readFile(file string) string {
 	b, err := os.ReadFile(file)
-	if err != nil {
+	if errors.Is(err, os.ErrNotExist) {
+		// can not read this file because it does not exist
+		return ""
+	} else if err != nil {
 		panic(err)
 	}
 	return string(b)
