@@ -76,7 +76,10 @@ func (cp *configProcessor) writeEnvFiles() error {
 		var buffer bytes.Buffer
 		filename := cp.filename(app)
 
+		// do not create a .env file if there are no snap options set for the app
+		// remove .env file if exists
 		if len(envVars) == 0 {
+			os.RemoveAll(filename)
 			continue
 		}
 
