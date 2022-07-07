@@ -76,6 +76,10 @@ func (cp *configProcessor) writeEnvFiles() error {
 		var buffer bytes.Buffer
 		filename := cp.filename(app)
 
+		if len(envVars) == 0 {
+			continue
+		}
+
 		// add env vars to buffer
 		for k, v := range envVars {
 			if _, err := fmt.Fprintf(&buffer, "%s=\"%s\"\n", k, v); err != nil {
