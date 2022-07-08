@@ -27,16 +27,14 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
-	"path"
 	"regexp"
 	"strconv"
 	"strings"
-	"syscall"
 
 	"github.com/canonical/edgex-snap-hooks/v2/log"
-	"github.com/canonical/edgex-snap-hooks/v2/options"
 )
 
+// Deprecated: use the env package
 var (
 	// Snap contains the value of the SNAP environment variable.
 	Snap string
@@ -56,99 +54,17 @@ var (
 	SnapRev string
 )
 
+// Deprecated
 // CtlCli is the test obj for overridding functions
 type CtlCli struct{}
 
+// Deprecated
 // SnapCtl interface provides abstration for unit testing
 type SnapCtl interface {
 	Config(key string) (string, error)
 	SetConfig(key string, val string) error
 	UnsetConfig(key string) error
 	Stop(svc string, disable bool) error
-}
-
-// CopyFile copies a file within the snap
-func CopyFile(srcPath, destPath string) error {
-
-	inFile, err := ioutil.ReadFile(srcPath)
-	if err != nil {
-		return err
-	}
-
-	// TODO: check file perm
-	err = ioutil.WriteFile(destPath, inFile, 0644)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-// CopyDir copies a whole directory recursively
-// snippet from https://blog.depa.do/post/copy-files-and-directories-in-go
-func CopyDir(srcPath string, dstPath string) error {
-	var err error
-	var fds []os.FileInfo
-	var srcinfo os.FileInfo
-
-	srcinfo, err = os.Stat(srcPath)
-	if err != nil {
-		return err
-	}
-
-	// Temporarily change the process umask to allow creating directory with rwx permissions.
-	oldMask := syscall.Umask(0)
-	defer syscall.Umask(oldMask)
-
-	err = os.MkdirAll(dstPath, srcinfo.Mode())
-	if err != nil {
-		return err
-	}
-
-	if fds, err = ioutil.ReadDir(srcPath); err != nil {
-		return err
-	}
-	for _, fd := range fds {
-		srcfp := path.Join(srcPath, fd.Name())
-		dstfp := path.Join(dstPath, fd.Name())
-
-		if fd.IsDir() {
-			err = CopyDir(srcfp, dstfp)
-			if err != nil {
-				return err
-			}
-		} else {
-			err = CopyFile(srcfp, dstfp)
-			if err != nil {
-				return err
-			}
-		}
-	}
-	return nil
-}
-
-// CopyFileReplace copies a file within the snap and replaces strings using
-// the string/replace values in the rStrings parameter.
-func CopyFileReplace(srcPath, destPath string, rStrings map[string]string) error {
-
-	inFile, err := ioutil.ReadFile(srcPath)
-	if err != nil {
-		return err
-	}
-
-	rStr := string(inFile)
-	for k, v := range rStrings {
-		rStr = strings.Replace(rStr, k, v, 1)
-	}
-
-	// TODO: check file perm
-	outBytes := []byte(rStr)
-	err = ioutil.WriteFile(destPath, outBytes, 0644)
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
 
 // Deprecated: use log.Debug or log.Debugf
@@ -171,6 +87,7 @@ func Warn(msg string) {
 	log.Warn(msg)
 }
 
+// Deprecated
 // getEnvVars populates global variables for each of the SNAP*
 // variables defined in the snap's environment
 func getEnvVars() error {
@@ -222,11 +139,13 @@ func init() {
 	}
 }
 
+// Deprecated
 // NewSnapCtl returns a normal runtime client
 func NewSnapCtl() *CtlCli {
 	return &CtlCli{}
 }
 
+// Deprecated
 // Config uses snapctl to get a value from a key, or returns error.
 func (cc *CtlCli) Config(key string) (string, error) {
 	output, err := exec.Command("snapctl", "get", key).CombinedOutput()
@@ -236,6 +155,7 @@ func (cc *CtlCli) Config(key string) (string, error) {
 	return strings.TrimSpace(string(output)), nil
 }
 
+// Deprecated
 // SetConfig uses snapctl to set a config value from a key, or returns error.
 func (cc *CtlCli) SetConfig(key string, val string) error {
 	output, err := exec.Command("snapctl", "set", fmt.Sprintf("%s=%s", key, val)).CombinedOutput()
@@ -245,6 +165,7 @@ func (cc *CtlCli) SetConfig(key string, val string) error {
 	return nil
 }
 
+// Deprecated
 // UnsetConfig uses snapctl to unset a config value from a key
 func (cc *CtlCli) UnsetConfig(key string) error {
 	output, err := exec.Command("snapctl", "unset", key).CombinedOutput()
@@ -254,6 +175,7 @@ func (cc *CtlCli) UnsetConfig(key string) error {
 	return nil
 }
 
+// Deprecated
 // Start uses snapctrl to start a service and optionally enable it
 func (cc *CtlCli) Start(svc string, enable bool) error {
 	var cmd *exec.Cmd
@@ -273,6 +195,7 @@ func (cc *CtlCli) Start(svc string, enable bool) error {
 	return nil
 }
 
+// Deprecated
 // StartMultiple uses snapctl to start one or more services and optionally enable all
 func (cc *CtlCli) StartMultiple(enable bool, services ...string) error {
 	if len(services) == 0 {
@@ -297,6 +220,7 @@ func (cc *CtlCli) StartMultiple(enable bool, services ...string) error {
 	return nil
 }
 
+// Deprecated
 // Stop uses snapctrl to stop a service and optionally disable it
 func (cc *CtlCli) Stop(svc string, disable bool) error {
 	var cmd *exec.Cmd
@@ -316,6 +240,7 @@ func (cc *CtlCli) Stop(svc string, disable bool) error {
 	return nil
 }
 
+// Deprecated
 // service status object
 type service struct {
 	name    string
@@ -324,6 +249,7 @@ type service struct {
 	notes   string
 }
 
+// Deprecated
 // services uses snapctl to get the list of services
 func (cc *CtlCli) services() ([]service, error) {
 
@@ -368,6 +294,7 @@ func (cc *CtlCli) services() ([]service, error) {
 	return services, nil
 }
 
+// Deprecated
 // EnabledServices uses snapctl to get the list of enabled services
 func (cc *CtlCli) EnabledServices() ([]string, error) {
 	services, err := cc.services()
@@ -385,6 +312,7 @@ func (cc *CtlCli) EnabledServices() ([]string, error) {
 	return enabledServices, nil
 }
 
+// Deprecated
 // p is the current prefix of the config key being processed (e.g. "service", "security.auth")
 // k is the key name of the current JSON object being processed
 // vJSON is the current object
@@ -416,6 +344,172 @@ func flattenConfigJSON(p string, k string, vJSON interface{}, flatConf map[strin
 	}
 }
 
+// Deprecated
+const userSemaphoreFile = ".secrets-config-user"
+const tlsSemaphoreFile = ".secrets-config-tls"
+const kongAdminTokenFile = "kong-admin-jwt"
+
+// Deprecated
+// Write a security-proxy file
+func securityProxyWriteFile(filename, contents string) (path string, err error) {
+	path = fmt.Sprintf("%s/secrets/security-proxy-setup/%s", SnapData, filename)
+	err = ioutil.WriteFile(path, []byte(contents), 0600)
+	if err == nil {
+		Debug(fmt.Sprintf("Wrote file '%s'", path))
+	} else {
+		err = fmt.Errorf("failed to write file %s - %v", path, err)
+	}
+	return
+}
+
+// Deprecated
+// Read a security-proxy file
+func securityProxyReadFile(filename string) (contents string, err error) {
+	path := fmt.Sprintf("%s/secrets/security-proxy-setup/%s", SnapData, filename)
+	bytes, err := ioutil.ReadFile(path)
+	if err == nil {
+		contents = string(bytes)
+		Debug(fmt.Sprintf("Read file '%s'", path))
+	} else {
+		err = fmt.Errorf("failed to read file %s - %v", path, err)
+	}
+	return
+}
+
+// Deprecated
+// Delete a security-proxy semaphore file
+func securityProxyRemoveSemaphore(filename string) (err error) {
+	path := fmt.Sprintf("%s/secrets/security-proxy-setup/%s", SnapData, filename)
+	err = os.Remove(path)
+	if err == nil {
+		Debug("Removed file '" + path + "'")
+	} else {
+		Debug(fmt.Sprintf("Could not remove file '%s' : %v", path, err))
+	}
+	return
+}
+
+// Deprecated
+// Execute the secrets-config tool with the given arguments
+func securityProxyExecSecretsConfig(args []string) error {
+	service := "security-proxy-setup"
+	cmdSecretsConfig := exec.Command("secrets-config", args...)
+	cmdSecretsConfig.Dir = fmt.Sprintf("%s/%s", SnapDataConf, service)
+	out, err := cmdSecretsConfig.Output()
+	Debug("Executed \"secrets-config " + fmt.Sprint(args) + "\" result=" + string(out))
+	return err
+}
+
+// Deprecated
+// Remove the semaphore, so that we can set the certificate again
+func securityProxyDeleteCurrentTLSCertIfSet() error {
+
+	return securityProxyRemoveSemaphore(tlsSemaphoreFile)
+}
+
+// Deprecated
+// Delete the current user - if one has been set up
+func securityProxyDeleteCurrentUserIfSet() error {
+	service := "security-proxy-setup"
+	// if no user has been set up, then ignore the request
+	username, err := securityProxyReadFile(userSemaphoreFile)
+	if err != nil {
+		Debug("proxy: No user has been set up")
+		return nil
+	}
+
+	args := []string{"proxy", "deluser", "--user", username}
+	cmdSecretsConfig := exec.Command("secrets-config", args...)
+	cmdSecretsConfig.Dir = fmt.Sprintf("%s/%s", SnapDataConf, service)
+	out, err := cmdSecretsConfig.Output()
+	if err != nil {
+		return err
+	}
+
+	securityProxyRemoveSemaphore(userSemaphoreFile)
+	Debug("Executed \"secrets-config " + fmt.Sprint(args) + "\" result=" + string(out))
+	Info("proxy: Removed current user")
+	return nil
+}
+
+// Deprecated
+// Set up the proxy with the specified user.
+func securityProxyAddUser(jwtUsername, jwtUserID, jwtAlgorithm, jwtPublicKey string) error {
+	currentUser, err := securityProxyReadFile(userSemaphoreFile)
+	if err == nil && currentUser != "" {
+		if currentUser == jwtUsername {
+			//	If a user has already been set - and it's the same user - then silently ignore the request
+			Debug("proxy: Ignoring request to set up same user again")
+			return nil
+		} else {
+			// if this is a different user, then return an error
+			return fmt.Errorf("the proxy user has already been set. To add a new user, first delete the current user by setting 'user' and 'public-key' to an empy string")
+		}
+	}
+
+	publicKeyFilePath, err := securityProxyWriteFile("jwt-user-public-key.pem", jwtPublicKey)
+	if err != nil {
+		return err
+	}
+
+	kongAdminToken, err := securityProxyReadFile(kongAdminTokenFile)
+	if err != nil {
+		return err
+	}
+
+	args := []string{"proxy", "adduser", "--token-type", "jwt", "--user", jwtUsername, "--id", jwtUserID, "--algorithm", jwtAlgorithm, "--public_key", publicKeyFilePath, "--jwt", kongAdminToken}
+	err = securityProxyExecSecretsConfig(args)
+	if err != nil {
+		return fmt.Errorf("failed to create proxy user - %v", err)
+	}
+	_, err = securityProxyWriteFile(userSemaphoreFile, jwtUsername)
+	if err != nil {
+		return err
+	}
+	Info("proxy: Added new user")
+	return nil
+}
+
+// Deprecated
+// Set the TLS certificate. If a certificate has already been set then silently ignore the request
+func securityProxySetTLSCertificate(tlsCertificate, tlsPrivateKey, tlsSNI string) error {
+	_, err := securityProxyReadFile(tlsSemaphoreFile)
+	if err == nil {
+		Debug("The TLS certificate has already been set. To set it again, first set tls-certificate and tls-private-key to an empty string")
+		return nil
+	}
+	tlsCertFilename, err := securityProxyWriteFile("tls-certificate.pem", tlsCertificate)
+	if err != nil {
+		return err
+	}
+	tlsPrivateKeyFilename, err := securityProxyWriteFile("tls-private-key.pem", tlsPrivateKey)
+	if err != nil {
+		return err
+	}
+
+	kongAdminToken, err := securityProxyReadFile(kongAdminTokenFile)
+	if err != nil {
+		return err
+	}
+
+	args := []string{"proxy", "tls", "--incert", tlsCertFilename, "--inkey", tlsPrivateKeyFilename, "--admin_api_jwt", kongAdminToken}
+	if tlsSNI != "" {
+		args = append(args, "--snis", tlsSNI)
+	}
+	err = securityProxyExecSecretsConfig(args)
+
+	if err != nil {
+		return fmt.Errorf("failed to set TLS certificate - %v", err)
+	}
+	_, err = securityProxyWriteFile(tlsSemaphoreFile, "TLS certificate set")
+	if err != nil {
+		return err
+	}
+	Info("New TLS Certificate and private key set")
+	return nil
+}
+
+// Deprecated
 // This func checks the given key for a service-specific prefix
 // delimited by a '/'. The prefix can either be a service name or a
 // CSV service list. If found, the prefix is compared against
@@ -440,6 +534,7 @@ func checkForServiceSpecificKey(k, service string) (bool, string) {
 	return true, noPrefixEnv
 }
 
+// Deprecated
 func getConfigEnvVar(k string, extraConf map[string]string) (string, bool) {
 	var env string
 
@@ -458,6 +553,7 @@ func getConfigEnvVar(k string, extraConf map[string]string) (string, bool) {
 	return env, false
 }
 
+// Deprecated
 // HandleEdgeXConfig processes snap configuration which can be used to override
 // edgexfoundry configuration via environment variables sourced by the snap
 // service wrapper script. The parameter service is used to create a new service
@@ -576,10 +672,10 @@ func HandleEdgeXConfig(service, envJSON string, extraConf map[string]string) err
 		if service == "security-proxy" {
 			if jwtUsername == "" && jwtPublicKey == "" {
 				// if the values have been set to "" then delete the current user
-				options.SecurityProxyDeleteCurrentUserIfSet()
+				securityProxyDeleteCurrentUserIfSet()
 			} else if jwtUsername != "" && jwtPublicKey != "" {
 				// else add a new user
-				err = options.SecurityProxyAddUser(jwtUsername, jwtUserID, jwtAlgorithm, jwtPublicKey)
+				err = securityProxyAddUser(jwtUsername, jwtUserID, jwtAlgorithm, jwtPublicKey)
 				if err != nil {
 					return err
 				}
@@ -587,10 +683,10 @@ func HandleEdgeXConfig(service, envJSON string, extraConf map[string]string) err
 
 			if tlsCertificate == "" && tlsPrivateKey == "" {
 				// if the values have been set to "" then clear the semaphore so that a new cert can be set
-				options.SecurityProxyDeleteCurrentTLSCertIfSet()
+				securityProxyDeleteCurrentTLSCertIfSet()
 			} else if tlsCertificate != "" && tlsPrivateKey != "" {
 				// Set the TLS certificate and private key
-				err = options.SecurityProxySetTLSCertificate(tlsCertificate, tlsPrivateKey, tlsSNI)
+				err = securityProxySetTLSCertificate(tlsCertificate, tlsPrivateKey, tlsSNI)
 				if err != nil {
 					return err
 				}
