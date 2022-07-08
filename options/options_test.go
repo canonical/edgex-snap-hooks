@@ -258,9 +258,13 @@ func isFileExist(file string) (bool, error) {
 func isInFile(file string, line string) error {
 	// check if the file exist first
 	isExist, err := isFileExist(file)
+	if err != nil {
+		return err
+	}
 	if isExist == false && line != "" {
 		return fmt.Errorf("%s is not in %s because the file does not exist\n", line, file)
 	}
+
 	// read the whole file at once
 	b, err := os.ReadFile(file)
 	if err != nil {
