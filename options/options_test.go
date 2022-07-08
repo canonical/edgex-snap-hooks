@@ -19,6 +19,7 @@
 package options_test
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path"
@@ -30,7 +31,6 @@ import (
 	"github.com/canonical/edgex-snap-hooks/v2/log"
 	"github.com/canonical/edgex-snap-hooks/v2/options"
 	"github.com/canonical/edgex-snap-hooks/v2/snapctl"
-	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
