@@ -19,6 +19,7 @@
 package options_test
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path"
@@ -90,12 +91,8 @@ func TestProcessAppConfig(t *testing.T) {
 				// disable config after processing once, otherwise the env files won't get cleaned up
 				require.NoError(t, snapctl.Unset(appOptions).Run())
 
-				// it should be removed from both env files
-				require.Error(t, isInFile(envFile, "X_Y=value"),
-					"File content:\n%s", readFile(envFile))
-				require.Error(t, isInFile(envFile2, "X_Y=value"),
-					"File content:\n%s", readFile(envFile2))
-
+				require.False(t, fileExists(t, envFile), "Env file should not exist.")
+				require.False(t, fileExists(t, envFile2), "Env file should not exist.")
 			})
 
 			require.NoError(t, snapctl.Set(key, value).Run())
@@ -103,10 +100,10 @@ func TestProcessAppConfig(t *testing.T) {
 			require.NoError(t, options.ProcessAppConfig(testService, testService2))
 
 			// both env files should have it
-			require.NoError(t, isInFile(envFile, `X_Y="value"`),
-				"File content:\n%s", readFile(envFile))
-			require.NoError(t, isInFile(envFile2, `X_Y="value"`),
-				"File content:\n%s", readFile(envFile2))
+			require.NoError(t, fileContains(t, envFile, `X_Y="value"`),
+				"File content:\n%s", readFile(t, envFile))
+			require.NoError(t, fileContains(t, envFile2, `X_Y="value"`),
+				"File content:\n%s", readFile(t, envFile2))
 		})
 
 		t.Run("unset", func(t *testing.T) {
@@ -130,9 +127,7 @@ func TestProcessAppConfig(t *testing.T) {
 				// disable config after processing once, otherwise the env files won't get cleaned up
 				require.NoError(t, snapctl.Unset(appOptions).Run())
 
-				// it should be removed from the env file
-				require.Error(t, isInFile(envFile, `X_Y="value"`),
-					"File content:\n%s", readFile(envFile))
+				require.False(t, fileExists(t, envFile), "Env file should not exist.")
 			})
 
 			require.NoError(t, snapctl.Set(key, value).Run())
@@ -140,12 +135,12 @@ func TestProcessAppConfig(t *testing.T) {
 			require.NoError(t, options.ProcessAppConfig(testService, testService2))
 
 			// first env file should have it
-			require.NoError(t, isInFile(envFile, `X_Y="value"`),
-				"File content:\n%s", readFile(envFile))
+			require.NoError(t, fileContains(t, envFile, `X_Y="value"`),
+				"File content:\n%s", readFile(t, envFile))
 
 			// second env file should NOT have it
-			require.Error(t, isInFile(envFile2, `X_Y="value"`),
-				"File content:\n%s", readFile(envFile2))
+			require.Error(t, fileContains(t, envFile2, `X_Y="value"`),
+				"File content:\n%s", readFile(t, envFile2))
 		})
 	})
 
@@ -225,41 +220,50 @@ func TestProcessAppConfig(t *testing.T) {
 		require.NoError(t, options.ProcessAppConfig(app))
 
 		// env file should have the X_Y
-		require.NoError(t, isInFile(envFile, `X_Y="value"`),
-			"File content:\n%s", readFile(envFile))
+		require.NoError(t, fileContains(t, envFile, `X_Y="value"`),
+			"File content:\n%s", readFile(t, envFile))
 
 		// set something bad
 		require.NoError(t, snapctl.Set("apps."+app+".config.dots.disallowed", value).Run())
 		require.Error(t, options.ProcessAppConfig(app))
 
 		// env file should still have the X_Y
-		require.Error(t, isInFile(envFile, `DOTS_DISALLOWED="value"`),
-			"File content:\n%s", readFile(envFile))
-		require.NoError(t, isInFile(envFile, `X_Y="value"`),
-			"File content:\n%s", readFile(envFile))
+		require.Error(t, fileContains(t, envFile, `DOTS_DISALLOWED="value"`),
+			"File content:\n%s", readFile(t, envFile))
+		require.NoError(t, fileContains(t, envFile, `X_Y="value"`),
+			"File content:\n%s", readFile(t, envFile))
 	})
 }
 
 // utility testing functions
 
-func isInFile(file string, line string) error {
-	// read the whole file at once
-	b, err := os.ReadFile(file)
-	if err != nil {
-		return err
+func fileExists(t *testing.T, file string) bool {
+	_, err := os.Stat(file)
+	if err == nil {
+		return true
 	}
+	if errors.Is(err, os.ErrNotExist) {
+		// file does not exist
+		return false
+	}
+	t.Fatalf("Error checking if file exists: %s", err)
+	return false
+}
 
-	if strings.Contains(string(b), line) {
+func fileContains(t *testing.T, file string, line string) error {
+	if strings.Contains(readFile(t, file), line) {
 		return nil
 	} else {
 		return fmt.Errorf("Line %s not found in %s", line, file)
 	}
 }
 
-func readFile(file string) string {
+func readFile(t *testing.T, file string) string {
 	b, err := os.ReadFile(file)
-	if err != nil {
-		panic(err)
+	if errors.Is(err, os.ErrNotExist) {
+		return "File not found: " + file
+	} else if err != nil {
+		t.Fatalf("Error reading file: %s", err)
 	}
 	return string(b)
 }

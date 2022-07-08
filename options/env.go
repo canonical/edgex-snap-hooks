@@ -76,6 +76,15 @@ func (cp *configProcessor) writeEnvFiles() error {
 		var buffer bytes.Buffer
 		filename := cp.filename(app)
 
+		// do not create a .env file if there are no snap options set for the app
+		// remove .env file if exists
+		if len(envVars) == 0 {
+			if err := os.RemoveAll(filename); err != nil {
+				return fmt.Errorf("failed to remove env file: %s", err)
+			}
+			continue
+		}
+
 		// add env vars to buffer
 		for k, v := range envVars {
 			if _, err := fmt.Fprintf(&buffer, "%s=\"%s\"\n", k, v); err != nil {
@@ -88,12 +97,12 @@ func (cp *configProcessor) writeEnvFiles() error {
 		tmp := filename + ".tmp"
 		err := os.WriteFile(tmp, buffer.Bytes(), 0644)
 		if err != nil {
-			return fmt.Errorf("failed to write %s  - %v", tmp, err)
+			return fmt.Errorf("failed to write %s: %s", tmp, err)
 		}
 
 		err = os.Rename(tmp, filename)
 		if err != nil {
-			return fmt.Errorf("failed to rename %s to %s:%v", tmp, filename, err)
+			return fmt.Errorf("failed to rename %s to %s: %s", tmp, filename, err)
 		}
 	}
 
