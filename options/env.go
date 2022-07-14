@@ -20,6 +20,7 @@ import (
 	"bytes"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/canonical/edgex-snap-hooks/v2/env"
@@ -94,8 +95,14 @@ func (cp *configProcessor) writeEnvFiles() error {
 
 		log.Infof("Writing to env file %s: %s", filename, strings.ReplaceAll(buffer.String(), "\n", " "))
 
+		dir := filepath.Dir(filename)
+		err := os.MkdirAll(dir, 0755)
+		if err != nil {
+			return err
+		}
+
 		tmp := filename + ".tmp"
-		err := os.WriteFile(tmp, buffer.Bytes(), 0644)
+		err = os.WriteFile(tmp, buffer.Bytes(), 0644)
 		if err != nil {
 			return fmt.Errorf("failed to write %s: %s", tmp, err)
 		}
