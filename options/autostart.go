@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/canonical/edgex-snap-hooks/v2/env"
 	"github.com/canonical/edgex-snap-hooks/v2/log"
 	"github.com/canonical/edgex-snap-hooks/v2/snapctl"
 )
@@ -99,7 +100,7 @@ func ProcessAutoStart(apps ...string) error {
 		}
 		log.Debugf("app %s: autostart=%t", app, appAutostart[app])
 		if autostart != nil && *autostart {
-			err = snapctl.Start(app).Enable().Run()
+			err = snapctl.Start(env.SnapName + "." + app).Enable().Run()
 			if err != nil {
 				return fmt.Errorf("error starting service: %s", err)
 			}
