@@ -32,10 +32,10 @@ func processAppAutostartOptions(apps []string) (map[string]*bool, error) {
 		// }
 
 		appAutostart[app] = options.Apps[app].Autostart
-		// if bValue != nil {
-		// 	appAutostart[app] = bValue
-		// }
-		log.Debug("%s: autostart=%t (app setting)", app, *appAutostart[app])
+
+		if appAutostart[app] != nil {
+			log.Debugf("%s: autostart=%t (app setting)", app, *appAutostart[app])
+		}
 	}
 
 	return appAutostart, nil
@@ -53,10 +53,9 @@ func processGlobalAutostartOptions(apps []string) (map[string]*bool, error) {
 		if err != nil {
 			return nil, fmt.Errorf("error parsing autostart for %s: %v", app, err)
 		}
-		// if bValue != nil {
-		// 	appAutostart[app] = bValue
-		// }
-		log.Debug("%s: autostart=%t (global setting)", app, *appAutostart[app])
+		if appAutostart[app] != nil {
+			log.Debugf("%s: autostart=%t (global setting)", app, *appAutostart[app])
+		}
 	}
 
 	return appAutostart, nil
@@ -79,9 +78,14 @@ func parseAutostart(value string) (*bool, error) {
 	}
 }
 
-// ProcessAutoStart will start and enable the listed app(s)
+// ProcessAutostart will start and enable the listed app(s)
 // based on the value of autostart snap option
-func ProcessAutoStart(apps ...string) error {
+func ProcessAutostart(apps ...string) error {
+	if len(apps) == 0 {
+		return fmt.Errorf("empty apps list")
+	}
+
+	log.Infof("Processing autostart for: %v", apps)
 
 	globalAppAutostart, err := processGlobalAutostartOptions(apps)
 	if err != nil {
@@ -100,7 +104,7 @@ func ProcessAutoStart(apps ...string) error {
 		}
 
 		if autostart != nil {
-			log.Info("%s: autostart=%t", app, *autostart)
+			log.Infof("%s: autostart=%t", app, *autostart)
 			if *autostart {
 				err = snapctl.Start(env.SnapName + "." + app).Enable().Run()
 				if err != nil {
