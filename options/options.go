@@ -31,7 +31,7 @@ type configOptions map[string]interface{}
 
 type appOptions struct {
 	Config    *configOptions `json:"config"`
-	Autostart *string        `json:"autostart"`
+	Autostart *bool          `json:"autostart"`
 	// custom app options
 	Proxy *proxyOptions `json:"proxy"`
 }
