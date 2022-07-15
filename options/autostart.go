@@ -99,18 +99,20 @@ func ProcessAutostart(apps ...string) error {
 
 	for _, app := range apps {
 		autostart := globalAppAutostart[app]
-		if a, found := appAutostart[app]; found {
-			autostart = a
+		// app setting takes precedence
+		if appAutostart[app] != nil {
+			autostart = appAutostart[app]
 		}
 
 		if autostart != nil {
-			log.Infof("%s: autostart=%t", app, *autostart)
 			if *autostart {
+				log.Infof("%s: will start and enable", app)
 				err = snapctl.Start(env.SnapName + "." + app).Enable().Run()
 				if err != nil {
 					return fmt.Errorf("error starting service: %s", err)
 				}
 			} else {
+				log.Infof("%s: will stop and disable", app)
 				err = snapctl.Stop(env.SnapName + "." + app).Disable().Run()
 				if err != nil {
 					return fmt.Errorf("error stopping service: %s", err)
