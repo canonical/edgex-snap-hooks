@@ -98,11 +98,19 @@ func ProcessAutoStart(apps ...string) error {
 		if a, found := appAutostart[app]; found {
 			autostart = a
 		}
-		log.Debugf("app %s: autostart=%t", app, appAutostart[app])
-		if autostart != nil && *autostart {
-			err = snapctl.Start(env.SnapName + "." + app).Enable().Run()
-			if err != nil {
-				return fmt.Errorf("error starting service: %s", err)
+
+		if autostart != nil {
+			log.Debugf("app %s: autostart=%t", app, *autostart)
+			if *autostart {
+				err = snapctl.Start(env.SnapName + "." + app).Enable().Run()
+				if err != nil {
+					return fmt.Errorf("error starting service: %s", err)
+				}
+			} else {
+				err = snapctl.Stop(env.SnapName + "." + app).Disable().Run()
+				if err != nil {
+					return fmt.Errorf("error stopping service: %s", err)
+				}
 			}
 		}
 	}
