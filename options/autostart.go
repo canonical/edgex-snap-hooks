@@ -92,7 +92,7 @@ func ProcessAutostart(apps ...string) error {
 		return fmt.Errorf("error processing global autostart option: %s", err)
 	}
 
-	appAutostart, err := processGlobalAutostartOptions(apps)
+	appAutostart, err := processAppAutostartOptions(apps)
 	if err != nil {
 		return fmt.Errorf("error processing global autostart option: %s", err)
 	}
