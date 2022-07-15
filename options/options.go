@@ -37,9 +37,8 @@ type appOptions struct {
 }
 
 type snapOptions struct {
-	Apps map[string]appOptions `json:"apps"`
-	// Apps   map[string]map[string]configOptions `json:"apps"`
-	Config *configOptions `json:"config"`
+	Apps   map[string]appOptions `json:"apps"`
+	Config *configOptions        `json:"config"`
 }
 
 func getConfigMap(config configOptions) (map[string]string, error) {
@@ -115,16 +114,6 @@ func migrateLegacyInternalOptions() error {
 	return nil
 }
 
-// Process the "apps.<app>.<my.option>" options, where <my.option> is not config
-// func processAppCustomOptions(service, key string, value configOptions) error {
-// 	switch service {
-// 	case "secrets-config":
-// 		return processSecretsConfigOptions(key, value)
-// 	default:
-// 		return fmt.Errorf("Unknown custom option %s for service %s", key, service)
-// 	}
-// }
-
 // Process the "apps.<app>.<custom.option>" where <custom.option> is not "config"
 func ProcessAppCustomOptions(service string) error {
 	var options snapOptions
@@ -140,18 +129,6 @@ func ProcessAppCustomOptions(service string) error {
 	}
 
 	log.Debugf("Processing custom options for service: %s", service)
-
-	// appOptions := options.Apps[service]
-	// log.Debugf("Processing custom options: %v", appOptions)
-	// if appOptions. {
-	// 	for k, v := range appOptions {
-	// 		if k != "config" && k != "autostart" {
-	// 			if err := processAppCustomOptions(service, k, v); err != nil {
-	// 				return err
-	// 			}
-	// 		}
-	// 	}
-	// }
 
 	switch service {
 	case "secrets-config":

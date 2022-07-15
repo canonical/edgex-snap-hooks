@@ -24,15 +24,7 @@ func processAppAutostartOptions(apps []string) (map[string]*bool, error) {
 
 	appAutostart := make(map[string]*bool)
 	for _, app := range apps {
-		// get the configuration specified for each app
-		// autostart := options.Apps[app].Autostart
-		// if autostart == nil {
-		// 	// no autostart option for the app
-		// 	continue
-		// }
-
 		appAutostart[app] = options.Apps[app].Autostart
-
 		if appAutostart[app] != nil {
 			log.Debugf("%s: autostart=%t (app setting)", app, *appAutostart[app])
 		}
@@ -99,20 +91,20 @@ func ProcessAutostart(apps ...string) error {
 
 	for _, app := range apps {
 		autostart := globalAppAutostart[app]
-		// app setting takes precedence
+		// app setting takes precedence over global setting
 		if appAutostart[app] != nil {
 			autostart = appAutostart[app]
 		}
 
 		if autostart != nil {
 			if *autostart {
-				log.Infof("%s: will start and enable", app)
+				log.Infof("%s will start and enable.", app)
 				err = snapctl.Start(env.SnapName + "." + app).Enable().Run()
 				if err != nil {
 					return fmt.Errorf("error starting service: %s", err)
 				}
 			} else {
-				log.Infof("%s: will stop and disable", app)
+				log.Infof("%s will stop and disable!", app)
 				err = snapctl.Stop(env.SnapName + "." + app).Disable().Run()
 				if err != nil {
 					return fmt.Errorf("error stopping service: %s", err)
