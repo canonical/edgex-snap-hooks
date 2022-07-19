@@ -1,5 +1,3 @@
-// -*- Mode: Go; indent-tabs-mode: t -*-
-
 /*
  * Copyright (C) 2022 Canonical Ltd
  *
@@ -183,7 +181,6 @@ func (cp *configProcessor) processAppConfigOptions(services []string) error {
 		// get the configuration specified for each service
 		// and create the environment override file
 		appConfig := options.Apps[service]
-		// log.Debugf("Processing appConfig: %v", appConfig)
 
 		if appConfig.Config == nil {
 			// no config options for this app
