@@ -41,7 +41,7 @@ const (
 	appOptions   = "app-options"
 )
 
-func TestProcessAppConfig(t *testing.T) {
+func TestProcessConfig(t *testing.T) {
 	// uncomment to cleanup previous mess
 	// assert.NoError(t, snapctl.Unset("app-options", "config-enabled", "apps", "config").Run())
 
