@@ -1,5 +1,3 @@
-// -*- Mode: Go; indent-tabs-mode: t -*-
-
 /*
  * Copyright (C) 2022 Canonical Ltd
  *
@@ -29,12 +27,19 @@ import (
 
 type configOptions map[string]interface{}
 
-type snapOptions struct {
-	Apps   map[string]map[string]configOptions `json:"apps"`
-	Config configOptions                       `json:"config"`
+type appOptions struct {
+	Config    *configOptions `json:"config"`
+	Autostart *bool          `json:"autostart"`
+	// custom app options
+	Proxy *proxyOptions `json:"proxy"`
 }
 
-func getConfigMap(config map[string]interface{}) (map[string]string, error) {
+type snapOptions struct {
+	Apps   map[string]appOptions `json:"apps"`
+	Config *configOptions        `json:"config"`
+}
+
+func getConfigMap(config configOptions) (map[string]string, error) {
 	result := make(map[string]string)
 
 	for env, value := range config {
@@ -64,7 +69,7 @@ func (cp *configProcessor) processGlobalConfigOptions(services []string) error {
 		return nil
 	}
 
-	configuration, err := getConfigMap(options.Config)
+	configuration, err := getConfigMap(*options.Config)
 	if err != nil {
 		return err
 	}
@@ -107,16 +112,6 @@ func migrateLegacyInternalOptions() error {
 	return nil
 }
 
-// Process the "apps.<app>.<my.option>" options, where <my.option> is not config
-func processAppCustomOptions(service, key string, value configOptions) error {
-	switch service {
-	case "secrets-config":
-		return processSecretsConfigOptions(key, value)
-	default:
-		return fmt.Errorf("Unknown custom option %s for service %s", key, service)
-	}
-}
-
 // Process the "apps.<app>.<custom.option>" where <custom.option> is not "config"
 func ProcessAppCustomOptions(service string) error {
 	var options snapOptions
@@ -133,38 +128,28 @@ func ProcessAppCustomOptions(service string) error {
 
 	log.Debugf("Processing custom options for service: %s", service)
 
-	appOptions := options.Apps[service]
-	log.Debugf("Processing custom options: %v", appOptions)
-	if appOptions != nil {
-		for k, v := range appOptions {
-			if k != "config" {
-				if err := processAppCustomOptions(service, k, v); err != nil {
-					return err
-				}
-			}
-		}
+	switch service {
+	case "secrets-config":
+		return processSecretsConfigOptions(options.Apps[service])
 	}
 
 	return nil
 }
 
-func validateAppConfigOptions(configOptions map[string]map[string]configOptions, expectedServices []string) error {
+func validateAppConfigOptions(appConfigOptions map[string]appOptions, expectedServices []string) error {
 	// make sure that set services in options are one of the expected services
 	expected := make(map[string]bool)
 	for _, s := range expectedServices {
 		expected[s] = true
 	}
 
-	for setService, value := range configOptions {
-		_, isConfig := value["config"]
-
-		if isConfig && !expected[setService] {
+	for setService, value := range appConfigOptions {
+		if value.Config != nil && !expected[setService] {
 			return fmt.Errorf("unsupported service in app config option: %s. Supported services are: %v",
 				setService,
 				expectedServices,
 			)
 		}
-
 	}
 	return nil
 }
@@ -196,29 +181,26 @@ func (cp *configProcessor) processAppConfigOptions(services []string) error {
 		// get the configuration specified for each service
 		// and create the environment override file
 		appConfig := options.Apps[service]
-		log.Debugf("Processing appConfig: %v", appConfig)
-		if appConfig != nil {
-			for k, v := range appConfig {
-				if k == "config" { // config overrides
-					config := v
-					log.Debugf("Processing config: %v", config)
-					if config != nil {
-						configuration, err := getConfigMap(config)
 
-						log.Debugf("Processing flattened config: %v", configuration)
-						if err != nil {
-							return err
-						}
-						for env, value := range configuration {
-							log.Debugf("Processing config option for %s: %v=%v", service, env, value)
-							if err := cp.addEnvVar(service, env, value); err != nil {
-								return err
-							}
-						}
-					}
-				}
+		if appConfig.Config == nil {
+			// no config options for this app
+			continue
+		}
+
+		log.Debugf("Processing config: %v", appConfig.Config)
+		configuration, err := getConfigMap(*appConfig.Config)
+
+		log.Debugf("Processing flattened config: %v", configuration)
+		if err != nil {
+			return err
+		}
+		for env, value := range configuration {
+			log.Debugf("Processing config option for %s: %v=%v", service, env, value)
+			if err := cp.addEnvVar(service, env, value); err != nil {
+				return err
 			}
 		}
+
 	}
 	return nil
 }

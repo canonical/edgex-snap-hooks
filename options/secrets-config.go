@@ -19,7 +19,6 @@
 package options
 
 import (
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -210,7 +209,7 @@ func securityProxySetTLSCertificate(tlsCertificate, tlsPrivateKey, tlsSNIs strin
 	return nil
 }
 
-func validateSecretsConfigProxyOptions(proxyMap configOptions, proxyObj proxyOptions) error {
+func validateSecretsConfigProxyOptions(proxyObj proxyOptions) error {
 
 	// TODO
 	// flatten and reject unknown keys
@@ -253,20 +252,15 @@ func validateSecretsConfigProxyOptions(proxyMap configOptions, proxyObj proxyOpt
 	return nil
 }
 
-func processSecretsConfigProxyOptions(proxyMap configOptions) error {
-	log.Debugf("Processing secrets-config proxy: %v", proxyMap)
-
-	b, err := json.Marshal(proxyMap)
-	if err != nil {
-		return fmt.Errorf("unexpected proxy marshal error: %s", err)
-	}
-	var proxy proxyOptions
-	err = json.Unmarshal(b, &proxy)
-	if err != nil {
-		return fmt.Errorf("unexpected proxy unmarshal error: %s", err)
+func processSecretsConfigProxyOptions(proxy *proxyOptions) error {
+	if proxy == nil {
+		// no proxy options
+		return nil
 	}
 
-	err = validateSecretsConfigProxyOptions(proxyMap, proxy)
+	log.Debugf("Processing secrets-config proxy: %v", proxy)
+
+	err := validateSecretsConfigProxyOptions(*proxy)
 	if err != nil {
 		return fmt.Errorf("error validating secrets-config proxy options: %s", err)
 	}
@@ -302,12 +296,6 @@ func processSecretsConfigProxyOptions(proxyMap configOptions) error {
 	return nil
 }
 
-func processSecretsConfigOptions(key string, value configOptions) error {
-	log.Debugf("Processing secrets-config: %s=%v", key, value)
-	switch key {
-	case "proxy":
-		return processSecretsConfigProxyOptions(value)
-	default:
-		return fmt.Errorf("unknown secrets-config option: %s", key)
-	}
+func processSecretsConfigOptions(ao appOptions) error {
+	return processSecretsConfigProxyOptions(ao.Proxy)
 }
