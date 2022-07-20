@@ -205,8 +205,8 @@ func (cp *configProcessor) processAppConfigOptions(services []string) error {
 	return nil
 }
 
-// ProcessAppConfig processes snap configuration which can be used to override
-// edgexfoundry configuration via environment variables sourced by the snap
+// ProcessConfig processes snap configuration which can be used to override
+// app configuration via environment variables sourced by the snap
 // service wrapper script.
 // A service specific file (named <service>.env) is created in  the
 // $SNAP_DATA/config/res directory.
@@ -215,12 +215,12 @@ func (cp *configProcessor) processAppConfigOptions(services []string) error {
 //	-> sets env var MY_ENV_VAR for an app
 // b) snap set edgex-snap-name config.<my.env.var>
 //	-> sets env variable for all apps (e.g. DEBUG=true, SERVICE_SERVERBINDADDRESS=0.0.0.0)
-func ProcessAppConfig(services ...string) error {
+func ProcessConfig(apps ...string) error {
 	// uncomment to enable snap debugging
 	// snapctl.Set("debug", "true")
 
-	if len(services) == 0 {
-		return fmt.Errorf("empty service list")
+	if len(apps) == 0 {
+		return fmt.Errorf("empty apps list")
 	}
 
 	appOptionsStr, err := snapctl.Get("app-options").Run()
@@ -296,15 +296,15 @@ Note: Disabling app-options WILL NOT revert the migration!`
 		log.Info("Unset all 'env.' options.")
 	}
 
-	cp := newConfigProcessor(services)
+	cp := newConfigProcessor(apps)
 
 	// process app-specific options
-	if err := cp.processGlobalConfigOptions(services); err != nil {
+	if err := cp.processGlobalConfigOptions(apps); err != nil {
 		return err
 	}
 
 	// process global options
-	if err := cp.processAppConfigOptions(services); err != nil {
+	if err := cp.processAppConfigOptions(apps); err != nil {
 		return err
 	}
 
@@ -313,5 +313,10 @@ Note: Disabling app-options WILL NOT revert the migration!`
 	}
 
 	return nil
+}
 
+// Deprecated
+// Use ProcessConfig
+func ProcessAppConfig(apps ...string) error {
+	return ProcessConfig(apps...)
 }
