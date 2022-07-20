@@ -51,7 +51,6 @@ func TestProcessAutostartGlobal(t *testing.T) {
 		require.NoError(t, options.ProcessAutostart(mockApp, mockApp2))
 
 		services, err := snapctl.Services(mockService, mockService2).Run()
-		t.Log(services)
 		require.NoError(t, err)
 		for name, status := range services {
 			require.False(t, status.Active, name+" active")
