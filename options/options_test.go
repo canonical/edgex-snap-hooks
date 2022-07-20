@@ -64,7 +64,7 @@ func TestProcessAppConfig(t *testing.T) {
 	})
 
 	t.Run("reject empty service list", func(t *testing.T) {
-		require.Error(t, options.ProcessAppConfig())
+		require.Error(t, options.ProcessConfig())
 	})
 
 	t.Run("global options", func(t *testing.T) {
@@ -80,14 +80,14 @@ func TestProcessAppConfig(t *testing.T) {
 		t.Run("reject without enabling", func(t *testing.T) {
 			require.NoError(t, snapctl.Set(key, value).Run())
 
-			require.Error(t, options.ProcessAppConfig(testService, testService2))
+			require.Error(t, options.ProcessConfig(testService, testService2))
 		})
 
 		t.Run("set+unset", func(t *testing.T) {
 			require.NoError(t, snapctl.Set(appOptions, "true").Run())
 			t.Cleanup(func() {
 				require.NoError(t, snapctl.Unset("config").Run())
-				require.NoError(t, options.ProcessAppConfig(testService, testService2))
+				require.NoError(t, options.ProcessConfig(testService, testService2))
 				// disable config after processing once, otherwise the env files won't get cleaned up
 				require.NoError(t, snapctl.Unset(appOptions).Run())
 
@@ -97,7 +97,7 @@ func TestProcessAppConfig(t *testing.T) {
 
 			require.NoError(t, snapctl.Set(key, value).Run())
 
-			require.NoError(t, options.ProcessAppConfig(testService, testService2))
+			require.NoError(t, options.ProcessConfig(testService, testService2))
 
 			// both env files should have it
 			require.NoError(t, fileContains(t, envFile, `X_Y="value"`),
@@ -123,7 +123,7 @@ func TestProcessAppConfig(t *testing.T) {
 			require.NoError(t, snapctl.Set(appOptions, "true").Run())
 			t.Cleanup(func() {
 				require.NoError(t, snapctl.Unset("apps").Run())
-				require.NoError(t, options.ProcessAppConfig(testService, testService2))
+				require.NoError(t, options.ProcessConfig(testService, testService2))
 				// disable config after processing once, otherwise the env files won't get cleaned up
 				require.NoError(t, snapctl.Unset(appOptions).Run())
 
@@ -132,7 +132,7 @@ func TestProcessAppConfig(t *testing.T) {
 
 			require.NoError(t, snapctl.Set(key, value).Run())
 
-			require.NoError(t, options.ProcessAppConfig(testService, testService2))
+			require.NoError(t, options.ProcessConfig(testService, testService2))
 
 			// first env file should have it
 			require.NoError(t, fileContains(t, envFile, `X_Y="value"`),
@@ -157,7 +157,7 @@ func TestProcessAppConfig(t *testing.T) {
 		require.NoError(t, snapctl.Set(appOptions, "true").Run())
 
 		require.NoError(t, snapctl.Set(legacyKey, legacyValue).Run())
-		require.NoError(t, options.ProcessAppConfig(testService))
+		require.NoError(t, options.ProcessConfig(testService))
 	})
 
 	t.Run("reject mixed legacy options", func(t *testing.T) {
@@ -183,7 +183,7 @@ func TestProcessAppConfig(t *testing.T) {
 		require.NoError(t, snapctl.Set(key, value).Run())
 
 		require.NoError(t, applyLegacyOptions("core-data"))
-		require.Error(t, options.ProcessAppConfig(testService, "core-data"))
+		require.Error(t, options.ProcessConfig(testService, "core-data"))
 	})
 
 	t.Run("reject unknown app", func(t *testing.T) {
@@ -197,7 +197,7 @@ func TestProcessAppConfig(t *testing.T) {
 			require.NoError(t, snapctl.Unset("apps").Run())
 		})
 
-		err := options.ProcessAppConfig(testService, "core-data")
+		err := options.ProcessConfig(testService, "core-data")
 		assert.Error(t, err)
 		require.Contains(t, err.Error(), "unsupported")
 
@@ -211,13 +211,13 @@ func TestProcessAppConfig(t *testing.T) {
 
 		t.Cleanup(func() {
 			require.NoError(t, snapctl.Unset("apps").Run())
-			require.NoError(t, options.ProcessAppConfig(app))
+			require.NoError(t, options.ProcessConfig(app))
 			// disable config after processing once, otherwise the env files won't get cleaned up
 			require.NoError(t, snapctl.Unset(appOptions).Run())
 		})
 
 		require.NoError(t, snapctl.Set(key, value).Run())
-		require.NoError(t, options.ProcessAppConfig(app))
+		require.NoError(t, options.ProcessConfig(app))
 
 		// env file should have the X_Y
 		require.NoError(t, fileContains(t, envFile, `X_Y="value"`),
@@ -225,7 +225,7 @@ func TestProcessAppConfig(t *testing.T) {
 
 		// set something bad
 		require.NoError(t, snapctl.Set("apps."+app+".config.dots.disallowed", value).Run())
-		require.Error(t, options.ProcessAppConfig(app))
+		require.Error(t, options.ProcessConfig(app))
 
 		// env file should still have the X_Y
 		require.Error(t, fileContains(t, envFile, `DOTS_DISALLOWED="value"`),
