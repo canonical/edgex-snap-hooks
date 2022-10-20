@@ -249,11 +249,12 @@ func TestProcessConfig(t *testing.T) {
 
 		require.NoError(t, snapctl.Set(key, value).Run())
 
+		// perform processing with custom configuration
 		options.EnableConfigHierarchy()
 		options.SetHierarchySeparator("__")
 		require.NoError(t, options.ProcessConfig(app))
 
-		// env file should have the X_Y
+		// env file should have P_A_R_E_N_T__CHILD
 		require.NoError(t, fileContains(t, envFile, `P_A_R_E_N_T__CHILD="value"`),
 			"File content:\n%s", readFile(t, envFile))
 	})
