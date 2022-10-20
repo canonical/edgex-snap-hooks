@@ -28,12 +28,19 @@ import (
 )
 
 type configProcessor struct {
-	appEnvVars map[string]map[string]string
+	appEnvVars            map[string]map[string]string
+	envSegmentSeparator   string
+	envHierarchySeparator string
+	configHierarchy       bool
 }
 
-func newConfigProcessor(apps []string) *configProcessor {
-	var cp configProcessor
-	cp.appEnvVars = make(map[string]map[string]string)
+func newConfigProcessor(apps []string, hierarchy bool, hSep, sSep string) *configProcessor {
+	cp := configProcessor{
+		appEnvVars:            make(map[string]map[string]string),
+		configHierarchy:       hierarchy,
+		envHierarchySeparator: hSep,
+		envSegmentSeparator:   sSep,
+	}
 	for _, app := range apps {
 		cp.appEnvVars[app] = make(map[string]string)
 	}
@@ -51,12 +58,18 @@ func (cp *configProcessor) addEnvVar(app, key, value string) error {
 	return err
 }
 
-// convert my-var to MY_VAR
+// convert snap option key to environment variable name
 func (cp *configProcessor) configKeyToEnvVar(configKey string) (string, error) {
-	if strings.Contains(configKey, ".") {
+	if cp.configHierarchy {
+		configKey = strings.ReplaceAll(configKey, ".", cp.envHierarchySeparator)
+	} else if strings.Contains(configKey, ".") {
 		return "", fmt.Errorf("config key must not contain dots: %s", configKey)
 	}
-	return strings.ReplaceAll(strings.ToUpper(configKey), "-", "_"), nil
+
+	return strings.ToUpper(
+		// replace the segment separator
+		strings.ReplaceAll(configKey, "-", cp.envSegmentSeparator),
+	), nil
 }
 
 // returns the suitable env file name for the service
