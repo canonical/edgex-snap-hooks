@@ -36,11 +36,13 @@ var (
 )
 
 // SetSegmentSeparator sets the separator used to replace hyphens in config.<x-y>
+// Default is _
 func SetSegmentSeparator(sep string) {
 	envSegmentSeparator = sep
 }
 
 // SetHierarchySeparator sets the separator used to replace dots in config.<x.y>
+// Default is _
 func SetHierarchySeparator(sep string) {
 	envHierarchySeparator = sep
 }
@@ -66,7 +68,7 @@ func newConfigProcessor(apps []string) *configProcessor {
 
 // add app's env var to memory
 func (cp *configProcessor) addEnvVar(app, key, value string) error {
-	envKey, err := cp.configKeyToEnvVar(key)
+	envKey, err := cp.configKeyToEnvVar(key, envHierarchySeparator, envSegmentSeparator, configHierarchy)
 	if err != nil {
 		return fmt.Errorf("error converting config key to environment variable key: %s", err)
 	}
@@ -76,15 +78,16 @@ func (cp *configProcessor) addEnvVar(app, key, value string) error {
 }
 
 // convert snap option key to environment variable name
-func (cp *configProcessor) configKeyToEnvVar(configKey string) (string, error) {
-	if configHierarchy {
-		configKey = strings.ReplaceAll(configKey, ".", envHierarchySeparator)
+func (cp *configProcessor) configKeyToEnvVar(configKey, hSep, sSep string, hierarchy bool) (string, error) {
+	if hierarchy {
+		configKey = strings.ReplaceAll(configKey, ".", hSep)
 	} else if strings.Contains(configKey, ".") {
 		return "", fmt.Errorf("config key must not contain dots: %s", configKey)
 	}
 
 	return strings.ToUpper(
-		strings.ReplaceAll(configKey, "-", envSegmentSeparator),
+		// replace the segment separator
+		strings.ReplaceAll(configKey, "-", sSep),
 	), nil
 }
 

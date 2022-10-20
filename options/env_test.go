@@ -24,37 +24,33 @@ import (
 
 func TestConfigKeyToEnvVar(t *testing.T) {
 
-	t.Run("no hierarchy", func(t *testing.T) {
+	t.Run("hierarchy disabled", func(t *testing.T) {
 		var cp configProcessor
 
-		v, err := cp.configKeyToEnvVar("x-y")
+		v, err := cp.configKeyToEnvVar("x-y", "_", "_", false)
 		require.NoError(t, err)
 		require.Equal(t, "X_Y", v)
 
-		SetSegmentSeparator("__")
-		v, err = cp.configKeyToEnvVar("x-y")
+		v, err = cp.configKeyToEnvVar("x-y", "_", "__", false)
 		require.NoError(t, err)
 		require.Equal(t, "X__Y", v)
 
-		_, err = cp.configKeyToEnvVar("x.y")
+		_, err = cp.configKeyToEnvVar("x.y", "_", "_", false)
 		require.Error(t, err)
 	})
 
-	t.Run("with hierarchy", func(t *testing.T) {
+	t.Run("hierarchy enabled", func(t *testing.T) {
 		var cp configProcessor
-		EnableConfigHierarchy()
 
-		v, err := cp.configKeyToEnvVar("x.y")
+		v, err := cp.configKeyToEnvVar("x.y", "_", "_", true)
 		require.NoError(t, err)
 		require.Equal(t, "X_Y", v)
 
-		SetSegmentSeparator("__")
-		v, err = cp.configKeyToEnvVar("x.y-z")
+		v, err = cp.configKeyToEnvVar("x.y-z", "_", "__", true)
 		require.NoError(t, err)
 		require.Equal(t, "X_Y__Z", v)
 
-		SetHierarchySeparator("___")
-		v, err = cp.configKeyToEnvVar("x.y-z")
+		v, err = cp.configKeyToEnvVar("x.y-z", "___", "__", true)
 		require.NoError(t, err)
 		require.Equal(t, "X___Y__Z", v)
 	})
