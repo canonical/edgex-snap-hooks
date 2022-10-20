@@ -233,6 +233,30 @@ func TestProcessConfig(t *testing.T) {
 		require.NoError(t, fileContains(t, envFile, `X_Y="value"`),
 			"File content:\n%s", readFile(t, envFile))
 	})
+
+	t.Run("hierarchy enabled", func(t *testing.T) {
+		const app = "test-service"
+		const key, value = "apps." + app + ".config.p-a-r-e-n-t.child", "value"
+
+		require.NoError(t, snapctl.Set(appOptions, "true").Run())
+
+		t.Cleanup(func() {
+			require.NoError(t, snapctl.Unset("apps").Run())
+			require.NoError(t, options.ProcessConfig(app))
+			// disable config after processing once, otherwise the env files won't get cleaned up
+			require.NoError(t, snapctl.Unset(appOptions).Run())
+		})
+
+		require.NoError(t, snapctl.Set(key, value).Run())
+
+		options.EnableConfigHierarchy()
+		options.SetHierarchySeparator("__")
+		require.NoError(t, options.ProcessConfig(app))
+
+		// env file should have the X_Y
+		require.NoError(t, fileContains(t, envFile, `P_A_R_E_N_T__CHILD="value"`),
+			"File content:\n%s", readFile(t, envFile))
+	})
 }
 
 // utility testing functions

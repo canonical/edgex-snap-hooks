@@ -205,6 +205,32 @@ func (cp *configProcessor) processAppConfigOptions(services []string) error {
 	return nil
 }
 
+var (
+	// Snapd uses dots for hierarchy and hyphens as segment separators
+	// These separators map to another character for environment variable names
+	envSegmentSeparator   = "_"
+	envHierarchySeparator = "_"
+	configHierarchy       = false
+)
+
+// SetSegmentSeparator sets the separator used to replace hyphens in config.<x-y>
+// Default is _
+func SetSegmentSeparator(sep string) {
+	envSegmentSeparator = sep
+}
+
+// SetHierarchySeparator sets the separator used to replace dots in config.<x.y>
+// Default is _
+func SetHierarchySeparator(sep string) {
+	envHierarchySeparator = sep
+}
+
+// EnableConfigHierarchy is to allow config options such as config.<x.y> with
+//	dots as the config key
+func EnableConfigHierarchy() {
+	configHierarchy = true
+}
+
 // ProcessConfig processes snap configuration which can be used to override
 // app configuration via environment variables sourced by the snap
 // service wrapper script.
@@ -296,7 +322,7 @@ Note: Disabling app-options WILL NOT revert the migration!`
 		log.Info("Unset all 'env.' options.")
 	}
 
-	cp := newConfigProcessor(apps)
+	cp := newConfigProcessor(apps, configHierarchy, envHierarchySeparator, envSegmentSeparator)
 
 	// process app-specific options
 	if err := cp.processGlobalConfigOptions(apps); err != nil {
