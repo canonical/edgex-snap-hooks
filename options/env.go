@@ -27,6 +27,12 @@ import (
 	"github.com/canonical/edgex-snap-hooks/v2/log"
 )
 
+var separator = "_"
+
+func SetSeparator(sep string) {
+	separator = sep
+}
+
 type configProcessor struct {
 	appEnvVars map[string]map[string]string
 }
@@ -56,7 +62,7 @@ func (cp *configProcessor) configKeyToEnvVar(configKey string) (string, error) {
 	if strings.Contains(configKey, ".") {
 		return "", fmt.Errorf("config key must not contain dots: %s", configKey)
 	}
-	return strings.ReplaceAll(strings.ToUpper(configKey), "-", "_"), nil
+	return strings.ReplaceAll(strings.ToUpper(configKey), "-", separator), nil
 }
 
 // returns the suitable env file name for the service
