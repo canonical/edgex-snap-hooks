@@ -27,10 +27,28 @@ import (
 	"github.com/canonical/edgex-snap-hooks/v2/log"
 )
 
-var separator = "_"
+var (
+	// Snapd uses dots for hierarchy and hyphens as segment separators
+	// These separators map to another character for environment variable names
+	envSegmentSeparator   = "_"
+	envHierarchySeparator = "_"
+	configHierarchy       = false
+)
 
-func SetSeparator(sep string) {
-	separator = sep
+// SetSegmentSeparator sets the separator used to replace hyphens in config.<x-y>
+func SetSegmentSeparator(sep string) {
+	envSegmentSeparator = sep
+}
+
+// SetHierarchySeparator sets the separator used to replace dots in config.<x.y>
+func SetHierarchySeparator(sep string) {
+	envHierarchySeparator = sep
+}
+
+// EnableConfigHierarchy is to allow config options such as config.<x.y> with
+//	dots as the config key
+func EnableConfigHierarchy() {
+	configHierarchy = true
 }
 
 type configProcessor struct {
@@ -57,12 +75,17 @@ func (cp *configProcessor) addEnvVar(app, key, value string) error {
 	return err
 }
 
-// convert my-var to MY_VAR
+// convert snap option key to environment variable name
 func (cp *configProcessor) configKeyToEnvVar(configKey string) (string, error) {
-	if strings.Contains(configKey, ".") {
+	if configHierarchy {
+		configKey = strings.ReplaceAll(configKey, ".", envHierarchySeparator)
+	} else if strings.Contains(configKey, ".") {
 		return "", fmt.Errorf("config key must not contain dots: %s", configKey)
 	}
-	return strings.ReplaceAll(strings.ToUpper(configKey), "-", separator), nil
+
+	return strings.ToUpper(
+		strings.ReplaceAll(configKey, "-", envSegmentSeparator),
+	), nil
 }
 
 // returns the suitable env file name for the service
