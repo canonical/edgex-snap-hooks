@@ -25,12 +25,14 @@ import (
 var (
 	// Snap contains the value of the SNAP environment variable.
 	Snap string
+	// Deprecated: moved to snap
 	// SnapConf contains the expanded path '$SNAP/config'.
 	SnapConf string
 	// SnapCommon contains the value of the SNAP_COMMON environment variable.
 	SnapCommon string
 	// SnapData contains the value of the SNAP_DATA environment variable.
 	SnapData string
+	// Deprecated: moved to snap
 	// SnapDataConf contains the expanded path '$SNAP_DATA/config'.
 	SnapDataConf string
 	// SnapInst contains the value of the SNAP_INSTANCE_NAME environment variable.
@@ -42,12 +44,15 @@ var (
 )
 
 const (
+	// Deprecated: use hooks package
 	// AutostartConfig is a configuration key used indicate that a
 	// service (application or device) should be autostarted on install
 	AutostartConfig = "autostart"
+	// Deprecated: use hooks package
 	// EnvConfig is the prefix used for configure hook keys used for
 	// EdgeX configuration overrides.
 	EnvConfig = "env"
+	// Deprecated: use hooks package
 	// ProfileConfig is a configuration key that specifies a named
 	// configuration profile
 	ProfileConfig = "profile"

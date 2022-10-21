@@ -28,44 +28,62 @@ const (
 	// ProfileConfig is a configuration key that specifies a named
 	// configuration profile
 	ProfileConfig = "profile"
+	// Deprecated: moved to snap
 	// ServiceConsul is the service key for Consul.
 	ServiceConsul = "consul"
+	// Deprecated: moved to snap
 	// ServiceRedis is the service key for Redis.
 	ServiceRedis = "redis"
+	// Deprecated: moved to snap
 	// ServiceData is the service key for EdgeX Core Data.
 	ServiceData = "core-data"
+	// Deprecated: moved to snap
 	// ServiceMetadata is the service key for EdgeX Core MetaData.
 	ServiceMetadata = "core-metadata"
+	// Deprecated: moved to snap
 	// ServiceCommand is the service key for EdgeX Core Command.
 	ServiceCommand = "core-command"
+	// Deprecated: moved to snap
 	// ServiceNotify is the service key for EdgeX Support Notifications.
 	ServiceNotify = "support-notifications"
+	// Deprecated: moved to snap
 	// ServiceSched is the service key for EdgeX Support Scheduler.
 	ServiceSched = "support-scheduler"
+	// Deprecated
 	// ServiceAppCfg is the service key for EdgeX App Service Configurable.
 	ServiceAppCfg = "app-service-configurable"
+	// Deprecated: app has been removed from edgexfoundry snap
 	// ServiceDevVirt is the service key for EdgeX Device Virtual.
 	ServiceDevVirt = "device-virtual"
+	// Deprecated: moved to snap
 	// ServiceSecStore is the service key for EdgeX Security Secret Store (aka Vault).
 	ServiceSecStore = "security-secret-store"
+	// Deprecated: moved to snap
 	// ServiceProxy is the service key for EdgeX API Gateway (aka Kong).
 	ServiceProxy = "security-proxy"
+	// Deprecated: moved to snap
 	// ServiceSysMgmt is the service key for EdgeX SMA (sys-mgmt-agent).
+	// Deprecated: moved to snap
 	ServiceSysMgmt = "sys-mgmt-agent"
 	// ServiceKuiper is the service key for the Kuiper rules engine.
+	// Deprecated: moved to snap
 	ServiceKuiper = "kuiper"
+	// Deprecated: moved to snap
 	// ServiceSecBootstrapper is the service key for the security-bootstrapper,
 	// a one-shot service that bootstraps per-service Consul ACLS required to
 	// access Consul for configuration or registry services.
 	ServiceSecBootstrapper = "security-bootstrapper"
-	snapEnv                = "SNAP"
-	snapCommonEnv          = "SNAP_COMMON"
-	snapDataEnv            = "SNAP_DATA"
-	snapInstNameEnv        = "SNAP_INSTANCE_NAME"
-	snapNameEnv            = "SNAP_NAME"
-	snapRevEnv             = "SNAP_REVISION"
+
+	// Deprecated: use env package
+	snapEnv         = "SNAP"
+	snapCommonEnv   = "SNAP_COMMON"
+	snapDataEnv     = "SNAP_DATA"
+	snapInstNameEnv = "SNAP_INSTANCE_NAME"
+	snapNameEnv     = "SNAP_NAME"
+	snapRevEnv      = "SNAP_REVISION"
 )
 
+// Deprecated
 // ConfToEnv defines mappings from snap config keys to EdgeX environment variable
 // names that are used to override individual service configuration values via a
 // .env file read by the snap service wrapper.
@@ -223,6 +241,7 @@ var ConfToEnv = map[string]string{
 	"add-registry-acl-roles": "security-bootstrapper/ADD_REGISTRY_ACL_ROLES",
 }
 
+// Deprecated: moved to snap
 // Services is a string array of all of the edgexfoundry snap services.
 var Services = []string{
 	// base services
