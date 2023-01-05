@@ -26,7 +26,6 @@ import (
 	"strings"
 	"testing"
 
-	hooks "github.com/canonical/edgex-snap-hooks/v2"
 	"github.com/canonical/edgex-snap-hooks/v2/env"
 	"github.com/canonical/edgex-snap-hooks/v2/log"
 	"github.com/canonical/edgex-snap-hooks/v2/options"
@@ -45,11 +44,11 @@ func TestProcessConfig(t *testing.T) {
 	// uncomment to cleanup previous mess
 	// assert.NoError(t, snapctl.Unset("app-options", "config-enabled", "apps", "config").Run())
 
-	configDir := fmt.Sprintf("%s/%s/res/", env.SnapDataConf, testService)
+	configDir := fmt.Sprintf("%s/config/%s/res/", env.SnapData, testService)
 	envFile := path.Join(configDir, testService+".env")
 	os.MkdirAll(configDir, os.ModePerm)
 
-	configDir2 := fmt.Sprintf("%s/%s/res/", env.SnapDataConf, testService2)
+	configDir2 := fmt.Sprintf("%s/config/%s/res/", env.SnapData, testService2)
 	envFile2 := path.Join(configDir2, testService2+".env")
 	os.MkdirAll(configDir2, os.ModePerm)
 
@@ -142,48 +141,6 @@ func TestProcessConfig(t *testing.T) {
 			require.Error(t, fileContains(t, envFile2, `X_Y="value"`),
 				"File content:\n%s", readFile(t, envFile2))
 		})
-	})
-
-	t.Run("Set mixed legacy options", func(t *testing.T) {
-		const (
-			legacyKey, legacyValue = "env." + testService + ".x", "legacyValue"
-			key, value             = "apps." + testService + ".config.x", "value"
-		)
-
-		t.Cleanup(func() {
-			assert.NoError(t, snapctl.Unset("env", "apps", appOptions).Run())
-		})
-
-		require.NoError(t, snapctl.Set(appOptions, "true").Run())
-
-		require.NoError(t, snapctl.Set(legacyKey, legacyValue).Run())
-		require.NoError(t, options.ProcessConfig(testService))
-	})
-
-	t.Run("reject mixed legacy options", func(t *testing.T) {
-		const (
-			legacyKey, legacyValue = "env.core-data.service.host", "legacy"
-			key, value             = "apps.core-data.config.x-y", "value"
-		)
-
-		configCoreDataDir := fmt.Sprintf("%s/core-data/res/", env.SnapDataConf)
-		envFileCoreData := path.Join(configCoreDataDir, "core-data.env")
-		os.MkdirAll(configCoreDataDir, os.ModePerm)
-
-		t.Cleanup(func() {
-			assert.NoError(t, snapctl.Unset(legacyKey).Run())
-			assert.NoError(t, snapctl.Unset(key).Run())
-			require.NoError(t, snapctl.Unset("apps").Run())
-
-			assert.NoError(t, os.RemoveAll(envFileCoreData))
-			assert.NoError(t, os.RemoveAll(configCoreDataDir))
-		})
-
-		require.NoError(t, snapctl.Set(legacyKey, legacyValue).Run())
-		require.NoError(t, snapctl.Set(key, value).Run())
-
-		require.NoError(t, applyLegacyOptions("core-data"))
-		require.Error(t, options.ProcessConfig(testService, "core-data"))
 	})
 
 	t.Run("reject unknown app", func(t *testing.T) {
@@ -291,18 +248,4 @@ func readFile(t *testing.T, file string) string {
 		t.Fatalf("Error reading file: %s", err)
 	}
 	return string(b)
-}
-
-func applyLegacyOptions(service string) error {
-	envJSON, err := hooks.NewSnapCtl().Config(hooks.EnvConfig + "." + service)
-	if err != nil {
-		return fmt.Errorf("failed to read config options for %s: %v", service, err)
-	}
-
-	if envJSON != "" {
-		if err := hooks.HandleEdgeXConfig(service, envJSON, nil); err != nil {
-			return err
-		}
-	}
-	return nil
 }

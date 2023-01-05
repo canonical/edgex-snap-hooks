@@ -20,7 +20,6 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/canonical/edgex-snap-hooks/v2/env"
 	"github.com/canonical/edgex-snap-hooks/v2/log"
 	"github.com/canonical/edgex-snap-hooks/v2/snapctl"
 )
@@ -51,7 +50,8 @@ func getConfigMap(config configOptions) (map[string]string, error) {
 }
 
 // Process the "config.<my.env.var>" configuration
-//	 -> setting env variable for all apps (e.g. DEBUG=true, SERVICE_SERVERBINDADDRESS=0.0.0.0)
+//
+//	-> setting env variable for all apps (e.g. DEBUG=true, SERVICE_SERVERBINDADDRESS=0.0.0.0)
 func (cp *configProcessor) processGlobalConfigOptions(services []string) error {
 	var options snapOptions
 
@@ -81,34 +81,6 @@ func (cp *configProcessor) processGlobalConfigOptions(services []string) error {
 			}
 		}
 	}
-	return nil
-}
-
-func migrateLegacyInternalOptions() error {
-
-	namespaceMap := map[string]string{
-		"env.security-secret-store.add-secretstore-tokens": "apps.security-secretstore-setup.config.add-secretstore-tokens",
-		"env.security-secret-store.add-known-secrets":      "apps.security-secretstore-setup.config.add-known-secrets",
-		"env.security-bootstrapper.add-registry-acl-roles": "apps.security-bootstrapper.config.add-registry-acl-roles",
-	}
-
-	for k, v := range namespaceMap {
-		setting, err := snapctl.Get(k).Run()
-		if err != nil {
-			return err
-		}
-		if setting != "" {
-			if err := snapctl.Unset(k).Run(); err != nil {
-				return err
-			}
-
-			if err := snapctl.Set(v, setting).Run(); err != nil {
-				return err
-			}
-			log.Debugf("Migrated %s to %s", k, v)
-		}
-	}
-
 	return nil
 }
 
@@ -155,6 +127,7 @@ func validateAppConfigOptions(appConfigOptions map[string]appOptions, expectedSe
 }
 
 // Process the "apps.<app>.config.<my.env.var>" configuration
+//
 //	-> setting env var MY_ENV_VAR for an app
 func (cp *configProcessor) processAppConfigOptions(services []string) error {
 	var options snapOptions
@@ -226,6 +199,7 @@ func SetHierarchySeparator(sep string) {
 }
 
 // EnableConfigHierarchy is to allow config options such as config.<x.y> with
+//
 //	dots as the config key
 func EnableConfigHierarchy() {
 	configHierarchy = true
@@ -238,8 +212,11 @@ func EnableConfigHierarchy() {
 // $SNAP_DATA/config/res directory.
 // The settings can either be app-specific or apply to all services/apps in the snap
 // a) snap set edgex-snap-name apps.<app>.config.<my.env.var>
+//
 //	-> sets env var MY_ENV_VAR for an app
+//
 // b) snap set edgex-snap-name config.<my.env.var>
+//
 //	-> sets env variable for all apps (e.g. DEBUG=true, SERVICE_SERVERBINDADDRESS=0.0.0.0)
 func ProcessConfig(apps ...string) error {
 	// uncomment to enable snap debugging
@@ -255,16 +232,6 @@ func ProcessConfig(apps ...string) error {
 	}
 	appOptions := (appOptionsStr == "true")
 
-	// Obsolete option from beta.
-	// Remove after the release of snaps and tests.
-	configEnabledStr, err := snapctl.Get("config-enabled").Run()
-	if err != nil {
-		return err
-	}
-	if configEnabledStr == "true" {
-		appOptions = true
-	}
-
 	log.Infof("Processing app options: %t", appOptions)
 
 	isSet := func(v string) bool {
@@ -275,51 +242,8 @@ func ProcessConfig(apps ...string) error {
 	if err != nil {
 		return err
 	}
-
-	if !appOptions {
-		appsOptions, err := snapctl.Get("apps").Run()
-		if err != nil {
-			return err
-		}
-		globalOptions, err := snapctl.Get("config").Run()
-		if err != nil {
-			return err
-		}
-		if isSet(appsOptions) || isSet(globalOptions) {
-			var migratable string
-			if env.SnapName == "edgexfoundry" {
-				migratable = `
-Exception: The following internally set env options are automatically migrated:
-	- env.security-secret-store.add-secretstore-tokens
-	- env.security-secret-store.add-known-secrets
-	- env.security-bootstrapper.add-registry-acl-roles
-Note: Disabling app-options WILL NOT revert the migration!`
-			}
-			return fmt.Errorf("app options (prefix `apps.' or 'config.') are allowed only when app-options is true.\n\n%s%s",
-				"WARNING: Setting app-options=true WILL UNSET existing env options and ignore future sets!!",
-				migratable)
-
-		} else if isSet(envOptions) {
-			// return and continue with legacy option handling
-			return nil
-		} else {
-			// no app options or env options are set
-			// continue to cleanup previously set env vars from files
-			log.Debug("No app options are set.")
-		}
-	}
-
 	if isSet(envOptions) {
-		if err := migrateLegacyInternalOptions(); err != nil {
-			return err
-		}
-
-		// It is important to unset any options to avoid conflicts in
-		// 	deprecated configure hook processing
-		if err := snapctl.Unset("env").Run(); err != nil {
-			return err
-		}
-		log.Info("Unset all 'env.' options.")
+		return fmt.Errorf("disallowed env options: %s", envOptions)
 	}
 
 	cp := newConfigProcessor(apps, configHierarchy, envHierarchySeparator, envSegmentSeparator)
@@ -339,10 +263,4 @@ Note: Disabling app-options WILL NOT revert the migration!`
 	}
 
 	return nil
-}
-
-// Deprecated
-// Use ProcessConfig
-func ProcessAppConfig(apps ...string) error {
-	return ProcessConfig(apps...)
 }
