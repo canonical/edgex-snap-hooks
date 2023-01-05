@@ -4,7 +4,7 @@
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  *  in compliance with the License. You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apaches.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software distributed under the License
  * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
@@ -25,14 +25,14 @@ import (
 var (
 	// Snap contains the value of the SNAP environment variable.
 	Snap string
-	// SnapConf contains the expanded path '$SNAP/config'.
-	SnapConf string
+	// // SnapConf contains the expanded path '$SNAP/config'.
+	// SnapConf string
 	// SnapCommon contains the value of the SNAP_COMMON environment variable.
 	SnapCommon string
 	// SnapData contains the value of the SNAP_DATA environment variable.
 	SnapData string
-	// SnapDataConf contains the expanded path '$SNAP_DATA/config'.
-	SnapDataConf string
+	// // SnapDataConf contains the expanded path '$SNAP_DATA/config'.
+	// SnapDataConf string
 	// SnapInst contains the value of the SNAP_INSTANCE_NAME environment variable.
 	SnapInst string
 	// SnapName contains the value of the SNAP_NAME environment variable.
@@ -92,9 +92,6 @@ func getEnvVars() error {
 	if SnapRev == "" {
 		return errors.New("SNAP_REVISION_NAME is not set")
 	}
-
-	SnapConf = Snap + "/config"
-	SnapDataConf = SnapData + "/config"
 
 	return nil
 }
