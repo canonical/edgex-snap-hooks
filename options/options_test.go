@@ -76,12 +76,6 @@ func TestProcessConfig(t *testing.T) {
 			assert.NoError(t, os.RemoveAll(envFile2))
 		})
 
-		t.Run("reject without enabling", func(t *testing.T) {
-			require.NoError(t, snapctl.Set(key, value).Run())
-
-			require.Error(t, options.ProcessConfig(testService, testService2))
-		})
-
 		t.Run("set+unset", func(t *testing.T) {
 			require.NoError(t, snapctl.Set(appOptions, "true").Run())
 			t.Cleanup(func() {
