@@ -89,6 +89,7 @@ func ProcessAutostart(apps ...string) error {
 		return fmt.Errorf("error processing global autostart option: %s", err)
 	}
 
+	var startList, stopList []string
 	for _, app := range apps {
 		autostart := globalAppAutostart[app]
 		// app setting takes precedence over global setting
@@ -99,17 +100,22 @@ func ProcessAutostart(apps ...string) error {
 		if autostart != nil {
 			if *autostart {
 				log.Infof("%s will start and enable.", app)
-				err = snapctl.Start(env.SnapName + "." + app).Enable().Run()
-				if err != nil {
-					return fmt.Errorf("error starting service: %s", err)
-				}
+				startList = append(startList, env.SnapName+"."+app)
 			} else {
 				log.Infof("%s will stop and disable!", app)
-				err = snapctl.Stop(env.SnapName + "." + app).Disable().Run()
-				if err != nil {
-					return fmt.Errorf("error stopping service: %s", err)
-				}
+				stopList = append(stopList, env.SnapName+"."+app)
 			}
+		}
+	}
+
+	if len(startList) > 0 {
+		if err := snapctl.Start(startList...).Enable().Run(); err != nil {
+			return fmt.Errorf("error starting services: %s", err)
+		}
+	}
+	if len(stopList) > 0 {
+		if err := snapctl.Stop(stopList...).Disable().Run(); err != nil {
+			return fmt.Errorf("error stopping service: %s", err)
 		}
 	}
 
