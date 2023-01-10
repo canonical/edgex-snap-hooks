@@ -98,6 +98,11 @@ func securityProxyExecSecretsConfig(args []string) error {
 		return fmt.Errorf("error executing 'secrets-config %s': error=%s: output=%s",
 			strings.Join(args, " "), err, out)
 	}
+	// secrets-config doesn't always return a non-zero exit code on errors
+	if strings.Contains(string(out), "ERROR") {
+		return fmt.Errorf("error output from 'secrets-config %s': %s",
+			strings.Join(args, " "), out)
+	}
 	log.Debugf("Executed 'secrets-config %s': output=%s", strings.Join(args, " "), out)
 	return nil
 }
