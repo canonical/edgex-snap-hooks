@@ -226,26 +226,6 @@ func ProcessConfig(apps ...string) error {
 		return fmt.Errorf("empty apps list")
 	}
 
-	appOptionsStr, err := snapctl.Get("app-options").Run()
-	if err != nil {
-		return err
-	}
-	appOptions := (appOptionsStr == "true")
-
-	log.Infof("Processing app options: %t", appOptions)
-
-	isSet := func(v string) bool {
-		return !(v == "" || v == "{}")
-	}
-
-	envOptions, err := snapctl.Get("env").Run()
-	if err != nil {
-		return err
-	}
-	if isSet(envOptions) {
-		return fmt.Errorf("disallowed env options: %s", envOptions)
-	}
-
 	cp := newConfigProcessor(apps, configHierarchy, envHierarchySeparator, envSegmentSeparator)
 
 	// process app-specific options
