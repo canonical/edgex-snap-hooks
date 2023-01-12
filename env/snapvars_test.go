@@ -42,6 +42,4 @@ func TestEnvVars(t *testing.T) {
 	assert.Equal(t, SnapData, "/var/snap/testsnap/x1")
 	assert.Equal(t, SnapInst, "testsnap")
 	assert.Equal(t, SnapRev, "2112")
-	// assert.Equal(t, SnapConf, "/snap/testsnap/x1/config")
-	// assert.Equal(t, SnapDataConf, "/var/snap/testsnap/x1/config")
 }

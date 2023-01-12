@@ -50,7 +50,6 @@ func getConfigMap(config configOptions) (map[string]string, error) {
 }
 
 // Process the "config.<my.env.var>" configuration
-//
 //	-> setting env variable for all apps (e.g. DEBUG=true, SERVICE_SERVERBINDADDRESS=0.0.0.0)
 func (cp *configProcessor) processGlobalConfigOptions(services []string) error {
 	var options snapOptions
@@ -127,7 +126,6 @@ func validateAppConfigOptions(appConfigOptions map[string]appOptions, expectedSe
 }
 
 // Process the "apps.<app>.config.<my.env.var>" configuration
-//
 //	-> setting env var MY_ENV_VAR for an app
 func (cp *configProcessor) processAppConfigOptions(services []string) error {
 	var options snapOptions
@@ -199,7 +197,6 @@ func SetHierarchySeparator(sep string) {
 }
 
 // EnableConfigHierarchy is to allow config options such as config.<x.y> with
-//
 //	dots as the config key
 func EnableConfigHierarchy() {
 	configHierarchy = true
@@ -212,11 +209,8 @@ func EnableConfigHierarchy() {
 // $SNAP_DATA/config/res directory.
 // The settings can either be app-specific or apply to all services/apps in the snap
 // a) snap set edgex-snap-name apps.<app>.config.<my.env.var>
-//
 //	-> sets env var MY_ENV_VAR for an app
-//
 // b) snap set edgex-snap-name config.<my.env.var>
-//
 //	-> sets env variable for all apps (e.g. DEBUG=true, SERVICE_SERVERBINDADDRESS=0.0.0.0)
 func ProcessConfig(apps ...string) error {
 	// uncomment to enable snap debugging
