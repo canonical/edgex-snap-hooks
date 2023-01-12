@@ -1,5 +1,5 @@
 # edgex-snap-hooks
-[![Go Reference](https://pkg.go.dev/badge/github.com/canonical/edgex-snap-hooks.svg)](https://pkg.go.dev/github.com/canonical/edgex-snap-hooks/v2)
+[![Go Reference](https://pkg.go.dev/badge/github.com/canonical/edgex-snap-hooks.svg)](https://pkg.go.dev/github.com/canonical/edgex-snap-hooks/v3)
 
 Snap hooks library used by [EdgeX Foundry](https://docs.edgexfoundry.org/) Go service snaps.  
 It provides utilites to implement snap hooks, including some wrappers for the [`snapctl`](https://snapcraft.io/docs/using-snapctl) commands.
@@ -7,7 +7,7 @@ It provides utilites to implement snap hooks, including some wrappers for the [`
 ### Usage
 Download or upgrade to the latest version:
 ```
-go get github.com/canonical/edgex-snap-hooks/v2
+go get github.com/canonical/edgex-snap-hooks/v3
 ```
 Please refer to [go get docs](https://pkg.go.dev/cmd/go#hdr-Add_dependencies_to_current_module_and_install_them) for details.
 
@@ -24,7 +24,7 @@ import (
 	"fmt"
 	"os"
 
-	hooks "github.com/canonical/edgex-snap-hooks/v2"
+	hooks "github.com/canonical/edgex-snap-hooks/v3"
 )
 
 func main() {

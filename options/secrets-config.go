@@ -1,5 +1,3 @@
-// -*- Mode: Go; indent-tabs-mode: t -*-
-
 /*
  * Copyright (C) 2022 Canonical Ltd
  *
@@ -25,8 +23,8 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/canonical/edgex-snap-hooks/v2/env"
-	"github.com/canonical/edgex-snap-hooks/v2/log"
+	"github.com/canonical/edgex-snap-hooks/v3/env"
+	"github.com/canonical/edgex-snap-hooks/v3/log"
 )
 
 const (

@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/canonical/edgex-snap-hooks/v2/env"
-	"github.com/canonical/edgex-snap-hooks/v2/log"
-	"github.com/canonical/edgex-snap-hooks/v2/snapctl"
+	"github.com/canonical/edgex-snap-hooks/v3/env"
+	"github.com/canonical/edgex-snap-hooks/v3/log"
+	"github.com/canonical/edgex-snap-hooks/v3/snapctl"
 )
 
 func processAppAutostartOptions(apps []string) (map[string]*bool, error) {

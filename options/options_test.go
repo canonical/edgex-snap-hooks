@@ -1,5 +1,3 @@
-// -*- Mode: Go; indent-tabs-mode: t -*-
-
 /*
  * Copyright (C) 2021 Canonical Ltd
  *
@@ -26,10 +24,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/canonical/edgex-snap-hooks/v2/env"
-	"github.com/canonical/edgex-snap-hooks/v2/log"
-	"github.com/canonical/edgex-snap-hooks/v2/options"
-	"github.com/canonical/edgex-snap-hooks/v2/snapctl"
+	"github.com/canonical/edgex-snap-hooks/v3/env"
+	"github.com/canonical/edgex-snap-hooks/v3/log"
+	"github.com/canonical/edgex-snap-hooks/v3/options"
+	"github.com/canonical/edgex-snap-hooks/v3/snapctl"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
