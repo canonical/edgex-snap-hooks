@@ -54,7 +54,7 @@ func TestProcessConfig(t *testing.T) {
 	log.Init()
 
 	t.Cleanup(func() {
-		assert.NoError(t, snapctl.Unset("apps", "config", "env").Run())
+		assert.NoError(t, snapctl.Unset("apps", "config").Run())
 		assert.NoError(t, snapctl.Unset("debug").Run())
 		assert.NoError(t, os.RemoveAll(configDir))
 		assert.NoError(t, os.RemoveAll(configDir2))
