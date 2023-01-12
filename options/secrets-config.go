@@ -1,5 +1,3 @@
-// -*- Mode: Go; indent-tabs-mode: t -*-
-
 /*
  * Copyright (C) 2022 Canonical Ltd
  *
@@ -25,8 +23,8 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/canonical/edgex-snap-hooks/v2/env"
-	"github.com/canonical/edgex-snap-hooks/v2/log"
+	"github.com/canonical/edgex-snap-hooks/v3/env"
+	"github.com/canonical/edgex-snap-hooks/v3/log"
 )
 
 const (
@@ -92,7 +90,7 @@ func securityProxyRemoveSemaphore(filename string) (err error) {
 func securityProxyExecSecretsConfig(args []string) error {
 	service := "security-proxy-setup"
 	cmdSecretsConfig := exec.Command("secrets-config", args...)
-	cmdSecretsConfig.Dir = fmt.Sprintf("%s/%s", env.SnapDataConf, service)
+	cmdSecretsConfig.Dir = fmt.Sprintf("%s/config/%s", env.SnapData, service)
 	out, err := cmdSecretsConfig.CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("error executing 'secrets-config %s': error=%s: output=%s",

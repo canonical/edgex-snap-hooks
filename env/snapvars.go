@@ -19,20 +19,16 @@ import (
 	"errors"
 	"os"
 
-	"github.com/canonical/edgex-snap-hooks/v2/log"
+	"github.com/canonical/edgex-snap-hooks/v3/log"
 )
 
 var (
 	// Snap contains the value of the SNAP environment variable.
 	Snap string
-	// SnapConf contains the expanded path '$SNAP/config'.
-	SnapConf string
 	// SnapCommon contains the value of the SNAP_COMMON environment variable.
 	SnapCommon string
 	// SnapData contains the value of the SNAP_DATA environment variable.
 	SnapData string
-	// SnapDataConf contains the expanded path '$SNAP_DATA/config'.
-	SnapDataConf string
 	// SnapInst contains the value of the SNAP_INSTANCE_NAME environment variable.
 	SnapInst string
 	// SnapName contains the value of the SNAP_NAME environment variable.
@@ -92,9 +88,6 @@ func getEnvVars() error {
 	if SnapRev == "" {
 		return errors.New("SNAP_REVISION_NAME is not set")
 	}
-
-	SnapConf = Snap + "/config"
-	SnapDataConf = SnapData + "/config"
 
 	return nil
 }

@@ -3,8 +3,8 @@ package options_test
 import (
 	"testing"
 
-	"github.com/canonical/edgex-snap-hooks/v2/options"
-	"github.com/canonical/edgex-snap-hooks/v2/snapctl"
+	"github.com/canonical/edgex-snap-hooks/v3/options"
+	"github.com/canonical/edgex-snap-hooks/v3/snapctl"
 	"github.com/stretchr/testify/require"
 )
 

@@ -27,7 +27,7 @@ package main
 import (
 	"fmt"
 
-	"github.com/canonical/edgex-snap-hooks/v2/snapctl"
+	"github.com/canonical/edgex-snap-hooks/v3/snapctl"
 )
 
 func main() {

@@ -23,8 +23,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/canonical/edgex-snap-hooks/v2/env"
-	"github.com/canonical/edgex-snap-hooks/v2/log"
+	"github.com/canonical/edgex-snap-hooks/v3/env"
+	"github.com/canonical/edgex-snap-hooks/v3/log"
 )
 
 type configProcessor struct {
@@ -78,9 +78,9 @@ func (cp *configProcessor) filename(service string) string {
 	// include the service name in it's configuration path.
 	var path string
 	if env.SnapName == "edgex-app-service-configurable" {
-		path = fmt.Sprintf("%s/res/%s.env", env.SnapDataConf, service)
+		path = fmt.Sprintf("%s/config/res/%s.env", env.SnapData, service)
 	} else {
-		path = fmt.Sprintf("%s/%s/res/%s.env", env.SnapDataConf, service, service)
+		path = fmt.Sprintf("%s/config/%s/res/%s.env", env.SnapData, service, service)
 	}
 	return path
 }
