@@ -1,12 +1,12 @@
 # snapctl
 Go wrapper library for the [snapctl](https://snapcraft.io/docs/using-snapctl) tool.
 
-Wrappers for following subcommands are implemented:
+Wrappers for following subcommands are partially implemented for EdgeX use cases:
 
 - [ ] `fde-setup-request`: Obtain full disk encryption setup request
 - [ ] `fde-setup-result`: Set result for full disk encryption
 - [x] `get`: The get command prints configuration and interface connection settings.                
-- [ ] `is-connected`: Return success if the given plug or slot is connected, and failure otherwise   
+- [x] `is-connected`: Return success if the given plug or slot is connected, and failure otherwise
 - [ ] `reboot`: Control the reboot behavior of the system          
 - [x] `restart`: Restart services    
 - [x] `services`: Query the status of services      

@@ -76,7 +76,6 @@ func (cmd isConnected) Run() (bool, error) {
 	args = append(args, cmd.plug)
 
 	out, err := run("is-connected", args...)
-
 	if err != nil && out == "" {
 		return false, nil
 	} else if err != nil {
