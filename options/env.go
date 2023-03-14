@@ -78,9 +78,9 @@ func (cp *configProcessor) filename(service string) string {
 	// include the service name in it's configuration path.
 	var path string
 	if env.SnapName == "edgex-app-service-configurable" {
-		path = fmt.Sprintf("%s/config/res/%s.env", env.SnapData, service)
+		path = fmt.Sprintf("%s/config/overrides.env", env.SnapData)
 	} else {
-		path = fmt.Sprintf("%s/config/%s/res/%s.env", env.SnapData, service, service)
+		path = fmt.Sprintf("%s/config/%s/overrides.env", env.SnapData, service)
 	}
 	return path
 }
@@ -97,6 +97,11 @@ func (cp *configProcessor) writeEnvFiles() error {
 				return fmt.Errorf("failed to remove env file: %s", err)
 			}
 			continue
+		}
+
+		// Add comment on top of the file
+		if _, err := fmt.Fprintln(&buffer, "# Sys-gen env vars from snap options:"); err != nil {
+			return err
 		}
 
 		// add env vars to buffer

@@ -42,12 +42,12 @@ func TestProcessConfig(t *testing.T) {
 	// uncomment to cleanup previous mess
 	// assert.NoError(t, snapctl.Unset("app-options", "config-enabled", "apps", "config").Run())
 
-	configDir := fmt.Sprintf("%s/config/%s/res/", env.SnapData, testService)
-	envFile := path.Join(configDir, testService+".env")
+	configDir := fmt.Sprintf("%s/config/%s/", env.SnapData, testService)
+	envFile := path.Join(configDir, "overrides.env")
 	os.MkdirAll(configDir, os.ModePerm)
 
-	configDir2 := fmt.Sprintf("%s/config/%s/res/", env.SnapData, testService2)
-	envFile2 := path.Join(configDir2, testService2+".env")
+	configDir2 := fmt.Sprintf("%s/config/%s/", env.SnapData, testService2)
+	envFile2 := path.Join(configDir2, "overrides.env")
 	os.MkdirAll(configDir2, os.ModePerm)
 
 	require.NoError(t, snapctl.Set("debug", "true").Run())
