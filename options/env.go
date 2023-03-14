@@ -100,7 +100,7 @@ func (cp *configProcessor) writeEnvFiles() error {
 		}
 
 		// Add comment on top of the file
-		if _, err := fmt.Fprintln(&buffer, "# System-generated list of environment variables from snap options"); err != nil {
+		if _, err := fmt.Fprintln(&buffer, "# Sys-gen env vars from snap options:"); err != nil {
 			return err
 		}
 
