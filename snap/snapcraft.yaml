@@ -7,6 +7,11 @@ description: This snap is used to run tests on this package
 grade: devel
 confinement: strict
 
+plugs:
+  # Plug for testing snapctl commands
+  test-plug:
+    interface: content
+    target: $SNAP_DATA
 
 apps:
   # App for running the tests
@@ -21,13 +26,12 @@ apps:
     install-mode: disable
   mock-service-2: *ms
 
-
 parts:
   go:
-    ## Using stage go snap doesn't work, 
+    ## Using stage go snap doesn't work,
     ## resulting in core dump when running go:
     # plugin: nil
-    # stage-snaps: 
+    # stage-snaps:
     #   - go/1.17
     # organize:
     #   '*': go/

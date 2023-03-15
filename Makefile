@@ -1,6 +1,6 @@
 
 try:
-	snapcraft try
+	snapcraft try --use-lxd
 	snap try prime
 
 sync:
