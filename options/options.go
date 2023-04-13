@@ -29,8 +29,6 @@ type configOptions map[string]interface{}
 type appOptions struct {
 	Config    *configOptions `json:"config"`
 	Autostart *bool          `json:"autostart"`
-	// custom app options
-	Proxy *proxyOptions `json:"proxy"`
 }
 
 type snapOptions struct {
@@ -81,30 +79,6 @@ func (cp *configProcessor) processGlobalConfigOptions(services []string) error {
 			}
 		}
 	}
-	return nil
-}
-
-// Process the "apps.<app>.<custom.option>" where <custom.option> is not "config"
-func ProcessAppCustomOptions(service string) error {
-	var options snapOptions
-
-	// get the 'apps' json structure
-	jsonString, err := snapctl.Get("apps").Document().Run()
-	if err != nil {
-		return err
-	}
-	err = json.Unmarshal([]byte(jsonString), &options)
-	if err != nil {
-		return err
-	}
-
-	log.Debugf("Processing custom options for service: %s", service)
-
-	switch service {
-	case "secrets-config":
-		return processSecretsConfigOptions(options.Apps[service])
-	}
-
 	return nil
 }
 
